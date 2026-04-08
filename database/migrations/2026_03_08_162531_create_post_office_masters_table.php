@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('post_office_master', function (Blueprint $table) {
+        Schema::create('post_office_masters', function (Blueprint $table) {
             $table->id();
             $table->string('name', 120);
-            $table->foreignId('block_id')->constrained('block_master');
+            $table->foreignId('block_id')->constrained('block_masters');
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_delete')->default(false);
+            $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });
     }

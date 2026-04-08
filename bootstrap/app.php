@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'jwt.role' => \App\Http\Middleware\JwtRoleMiddleware::class,
+            'check.device' => \App\Http\Middleware\CheckDeviceMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

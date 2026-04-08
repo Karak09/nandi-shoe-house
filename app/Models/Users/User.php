@@ -5,8 +5,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable; // Extending Authenticatable for login features
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Users\UserDetail;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
     protected $table = 'users';
 
@@ -39,6 +41,21 @@ class User extends Authenticatable
 
     public function details(): BelongsTo
     {
-        return $this->belongsTo(UsersDetail::class, 'user_details_id');
+        // FIXED: Added 's' to UsersDetails
+        return $this->belongsTo(UsersDetails::class, 'user_details_id'); 
+    }
+
+    // --- JWT METHODS ---
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        // Embed the role ID in the token so the frontend always knows who the user is
+        return [
+            'role_id' => $this->user_type_id
+        ];
     }
 }

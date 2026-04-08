@@ -27,8 +27,14 @@ return new class extends Migration
             $table->string('gender', 120)->nullable();
             
             // Foreign Keys
-            $table->foreignId('state_id')->constrained('state_master');
-            $table->foreignId('district_id')->constrained('district_master');
+            $table->foreignId('state_id')->constrained('state_masters');
+            $table->foreignId('district_id')->constrained('district_masters');
+            $table->foreignId('block_id')->nullable()->constrained('block_masters');
+            $table->foreignId('gp_id')->nullable()->constrained('gp_masters');
+            $table->foreignId('vill_id')->nullable()->constrained('village_masters');
+            $table->foreignId('muni_id')->nullable()->constrained('municipality_masters');
+            $table->foreignId('ward_id')->nullable()->constrained('ward_masters');
+            $table->foreignId('post_id')->nullable()->constrained('post_office_masters');
             
             $table->string('pin', 10)->nullable();
             $table->string('image_doc', 120)->nullable();
