@@ -10,7 +10,7 @@ class UserTypeMaster extends Model
 {
     use HasFactory;
 
-    protected $table = 'user_type_master';
+    protected $table = 'user_type_masters';
 
     protected $fillable = [
         'u_type', 'is_active', 'is_delete',

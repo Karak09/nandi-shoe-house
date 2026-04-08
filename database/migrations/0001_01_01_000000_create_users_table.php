@@ -44,7 +44,7 @@ return new class extends Migration
             
             // Foreign Keys
             $table->foreignId('user_details_id')->constrained('users_details');
-            $table->foreignId('user_type_id')->constrained('user_type_master');
+            $table->foreignId('user_type_id')->constrained('user_type_masters'); // Add the 's' here!
             
             $table->string('username', 100)->unique();
             $table->string('login_id', 150)->unique();

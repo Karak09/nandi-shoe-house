@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('district_master', function (Blueprint $table) {
+        Schema::create('district_masters', function (Blueprint $table) {
             $table->id();
             $table->string('name', 120);
-            $table->foreignId('state_id')->constrained('state_master');
+            $table->foreignId('state_id')->constrained('state_masters');
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_delete')->default(false);
+            $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });
     }
