@@ -9,10 +9,15 @@ use App\Models\Unit\Unit;
 
 class PurchaseTransactionDetails extends Model {
     protected $table = 'purchase_transaction_details';
-    protected $guarded = ['id', 'created_at', 'updated_at'];
+    
+    protected $fillable = [
+        'purchase_details_id', 'store_id', 'product_id', 'quantity', 'uom', 
+        'mfg_date', 'exp_date', 'mrp', 'unit_price','total_price','batch_no',
+        'no_of_pack','each_pack_quantity','gst','cgst','sgst','is_packet','transaction_type'
+    ];
     
     protected $casts = [
-        'batch_no' => 'array', // Automatically handles the JSON casting
+        'batch_no' => 'array', 
     ];
 
     public function purchaseDetails(): BelongsTo {
@@ -26,4 +31,10 @@ class PurchaseTransactionDetails extends Model {
     public function uomRelation(): BelongsTo {
         return $this->belongsTo(Unit::class, 'uom');
     }
+
+    public function store(): BelongsTo 
+    {
+        return $this->belongsTo(\App\Models\Stores\StoreMaster::class, 'store_id');
+    }
+    
 }

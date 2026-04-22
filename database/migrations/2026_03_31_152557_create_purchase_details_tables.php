@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('foth_image_file_name', 120)->nullable();
             $table->string('fiv_image_doc', 120)->nullable();
             $table->string('fiv_image_file_name', 120)->nullable();
-            
+            $table->smallInteger('transaction_type')->default(1); // 1 = IN (Purchase), 2 = OUT (Transfer)
             $table->timestamps();
         });
     }

@@ -111,6 +111,7 @@ class PurchasedController extends CommonController
                 'command'      => $request->command, // Added Command
                 'ip_address'   => $request->ip(),
                 'total'        => 0, 
+                'transaction_type' => 1 
             ]);
 
             foreach ($uploadedData as $slot => $fileData) {
