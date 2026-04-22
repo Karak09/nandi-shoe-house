@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('store_stock_details', function (Blueprint $table) {
             $table->id();
+
             $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger('store_id');
+            $table->foreignId('purchase_details_id')->constrained('purchase_details')->onDelete('cascade');
             $table->unsignedBigInteger('received_from')->nullable();
             $table->unsignedBigInteger('product_id');
             $table->decimal('quantity', 10, 2);
@@ -30,6 +32,7 @@ return new class extends Migration
             $table->decimal('cgst', 5, 2)->default(0);
             $table->decimal('sgst', 5, 2)->default(0);
             $table->boolean('is_packet')->default(false);
+            $table->smallInteger('transaction_type');  // 1 = IN (Purchase), 2 = OUT (Transfer)
             $table->timestamps();
         });
     }

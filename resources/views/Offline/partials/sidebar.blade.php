@@ -49,7 +49,23 @@
                 Purchases Transaction Ledger
             </a>
         </div>
-        
+
+        <div class="sidebar-section" data-allowed-roles="0,1">
+            <div class="nav-label">Purchases Data</div>
+            <a href="/store-transfers" class="nav-item {{ request()->routeIs('store_stock.index') ? 'active' : '' }}">
+                Godown Stock Transfer
+            </a>
+            <a href="/store-total-stock" class="nav-item {{ request()->routeIs('store_stock.total') ? 'active' : '' }}">
+                Store Total Stock
+            </a>
+            <a href="/store-purchase-history" class="nav-item {{ request()->routeIs('store_purchase_history.inward') ? 'active' : '' }}">
+                Store Purchase History
+            </a>
+            <a href="/store-all-transaction" class="nav-item {{ request()->routeIs('store_all_stock.transaction') ? 'active' : '' }}">
+                Stock All Transfer Transaction History
+            </a>
+        </div>
+
         <div class="sidebar-section" data-allowed-roles="0,1,4">
             <div class="nav-label">Inventory & Sales</div>
             <a href="#" class="nav-item">Purchase Entry</a>

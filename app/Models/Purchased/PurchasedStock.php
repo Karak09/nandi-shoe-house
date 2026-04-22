@@ -12,6 +12,10 @@ class PurchasedStock extends Model {
     protected $table = 'purchased_stocks'; 
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
+    protected $fillable = [
+        'product_id', 'quantity', 'uom', 'no_of_pack', 'each_pack_quantity','is_packet'
+    ];
+
     public function product(): BelongsTo {
         return $this->belongsTo(Product::class, 'product_id');
     }
