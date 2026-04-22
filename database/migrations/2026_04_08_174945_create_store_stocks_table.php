@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('store_stocks', function (Blueprint $table) {
             $table->id();
+
             $table->unsignedBigInteger('store_id');
             $table->unsignedBigInteger('product_id');
             $table->decimal('quantity', 10, 2)->default(0);
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->integer('no_of_pack')->default(0);
             $table->string('each_pack_quantity', 120)->nullable();
             $table->boolean('is_packet')->default(false);
+            
             $table->boolean('is_active')->default(true);
             $table->boolean('is_deleted')->default(false);
             $table->timestamps();

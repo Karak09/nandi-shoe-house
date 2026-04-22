@@ -83,7 +83,7 @@
             if (Date.now() - lastActivity > logoutTimeLimit) {
                 const logoutBtn = document.getElementById('btnLogoutSafe');
                 if(logoutBtn) {
-                    alert("You have been inactive for 15 minutes. For security reasons, you have been logged out.");
+                    alert("Sorry, your session timed out after a long time of inactivity. Please click on the link below to login again.");
                     logoutBtn.click();
                 }
             }
