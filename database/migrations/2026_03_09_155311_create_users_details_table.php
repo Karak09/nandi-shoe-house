@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('otp_email', 120)->nullable();
             $table->text('address')->nullable();
             $table->string('gender', 120)->nullable();
+            $table->string('application_no', 120)->nullable();
             
             // Foreign Keys
             $table->foreignId('state_id')->constrained('state_masters');

@@ -34,7 +34,7 @@ return new class extends Migration
             $table->decimal('sgst', 5, 2)->default(0);
             
             $table->boolean('is_packet')->default(false);
-            $table->smallInteger('transaction_type')->default(1); // 1 = IN (Purchase), 2 = OUT (Transfer)
+            $table->smallInteger('transaction_type'); // 1 = IN (Purchase), 2 = OUT (Transfer)
             $table->timestamps();
         });
     }

@@ -65,6 +65,7 @@ return new class extends Migration
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
             $table->string('entry_ip', 150)->nullable();
+            $table->string('device_name', 150)->nullable();
             $table->timestamps();
         });
     }

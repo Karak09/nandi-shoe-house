@@ -35,11 +35,12 @@ class Unit_ConvertController extends Controller
         $validator = Validator::make($request->all(), [
             'name'         => 'required|string|max:120',
             'from_unit'    => 'required|integer',
-            'to_unit'      => 'required|integer|different:from_unit', 
+            'to_unit'      => 'required|integer', 
             'unit_factor'  => 'required|numeric|min:0.001',
             'price_factor' => 'required|numeric|min:0.001',
-        ], [
-            'to_unit.different' => 'From Unit and To Unit cannot be the same.'
+        // ], 
+        // [
+            // 'to_unit.different' => 'From Unit and To Unit cannot be the same.'
         ]);
 
         if ($validator->fails()) return response()->json(['status' => 'error', 'errors' => $validator->errors()], 422);
@@ -66,8 +67,8 @@ class Unit_ConvertController extends Controller
             'to_unit'      => 'required|integer|different:from_unit',
             'unit_factor'  => 'required|numeric|min:0.001',
             'price_factor' => 'required|numeric|min:0.001',
-        ], [
-            'to_unit.different' => 'From Unit and To Unit cannot be the same.'
+        // ], [
+        //     'to_unit.different' => 'From Unit and To Unit cannot be the same.'
         ]);
 
         if ($validator->fails()) return response()->json(['status' => 'error', 'errors' => $validator->errors()], 422);

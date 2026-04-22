@@ -65,13 +65,13 @@ class SuperAdminSeeder extends Seeder
             );
 
             DB::commit();
-            $this->command->info('✅ Super Admin seeded successfully!');
-            $this->command->info('📧 Login ID: superadmin@gmail.com');
-            $this->command->info('🔑 Password: ' . $comPassword);
+            $this->command->info('Super Admin seeded successfully!');
+            $this->command->info('Login ID: superadmin@gmail.com');
+            $this->command->info('Password: ' . $comPassword);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->command->error('❌ Failed to seed Super Admin: ' . $e->getMessage());
+            $this->command->error('Failed to seed Super Admin: ' . $e->getMessage());
         }
 
         // Re-enable foreign key checks

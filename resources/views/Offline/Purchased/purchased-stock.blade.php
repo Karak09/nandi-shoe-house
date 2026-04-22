@@ -48,7 +48,7 @@
                                 @endif
                             </td>
                             <td>
-                                @if($s->quantity > 20)
+                                @if($s->quantity > 10)
                                     <span class="status-badge status-ok">In Stock</span>
                                 @else
                                     <span class="status-badge status-low">Low Stock</span>
