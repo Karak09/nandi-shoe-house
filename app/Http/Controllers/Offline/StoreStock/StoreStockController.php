@@ -14,11 +14,10 @@ use App\Models\StoreStock\StoreStockDetails;
 use App\Models\Stores\StoreMaster;
 use App\Models\Unit\Unit;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Contracts\Encryption\DecryptException;
+use App\Http\Controllers\Common\CommonController;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class StoreStockController extends Controller
+class StoreStockController extends CommonController
 {
     public function index()
     {
@@ -51,16 +50,38 @@ class StoreStockController extends Controller
     }
 
     // --- Store Total Stock PAGE ---
-    public function totalStock(Request $request)
+    public function totalStock(Request $request, $store_id=null)
     {
-        $stores = StoreMaster::where('is_active', true)->where('is_deleted', false)->get();
-        $storeId = $request->input('store_id', $stores->first()->id ?? null);
+        $stores = StoreMaster::where('is_active', true)
+            ->where('is_deleted', false)
+            ->get();
+
+        if ($store_id) {
+            $storeId = $this->decryptData($store_id);
+
+            if (!$storeId) {
+                abort(404, 'Invalid Store ID');
+            }
+        } else {
+            $storeId = $stores->first()->id ?? null;
+        }
+
+        $stores->map(function ($store) {
+            $store->enc_id = $this->encryptData($store->id);
+            return $store;
+        });
 
         $storeStocks = StoreStock::with(['product', 'uomRelation'])
             ->where('store_id', $storeId)
             ->orderBy('quantity', 'desc')
             ->get();
             
+        $storeStocks->map(function ($stock) {
+            $stock->enc_store_id = $this->encryptData((string) $stock->store_id);
+            $stock->enc_product_id = $this->encryptData((string) $stock->product_id);
+            return $stock;
+        });
+
         // Fetch images efficiently
         $productIds = $storeStocks->pluck('product_id')->toArray();
         $productImages = DB::table('product_images')
@@ -76,11 +97,11 @@ class StoreStockController extends Controller
     // --- Store Product HISTORY PAGE ---
     public function productHistory($enc_store_id, $enc_product_id)
     {
-        try {
-            $store_id = Crypt::decrypt($enc_store_id);
-            $product_id = Crypt::decrypt($enc_product_id);
-        } catch (DecryptException $e) {
-            abort(404, 'Invalid Link');
+        $store_id = $this->decryptData($enc_store_id);
+        $product_id = $this->decryptData($enc_product_id);
+
+        if (!$store_id || !$product_id) {
+            abort(404, 'Invalid Link Data');
         }
 
         $store = StoreMaster::find($store_id);
@@ -90,51 +111,44 @@ class StoreStockController extends Controller
             ->where('store_stock_details.store_id', $store_id)
             ->where('store_stock_details.product_id', $product_id)
             ->select('store_stock_details.*', 'purchase_details.challan_no as bill_no')
-            ->orderBy('store_stock_details.created_at', 'asc') // MUST be ascending for math
+            ->orderBy('store_stock_details.created_at', 'asc')
             ->get();
 
         $imageRecord = DB::table('product_images')
             ->where('product_id', $product_id)
             ->first();
-        $imageUrl = ($imageRecord && $imageRecord->fst_image_doc) ? asset('storage/' . $imageRecord->fst_image_doc) : null;
+
+        $imageUrl = ($imageRecord && $imageRecord->fst_image_doc) 
+            ? asset('storage/' . $imageRecord->fst_image_doc) 
+            : null;
 
         $totalIn = 0;
         $totalOut = 0;
         $runningStock = 0;
 
-        // Calculate everything
+        // 3. Calculate running stock safely
         foreach($details as $detail) {
+            $qty = (float) $detail->quantity;
+            
             if($detail->transaction_type == 1) { // IN
-                $totalIn += $detail->quantity;
-                $runningStock += $detail->quantity;
-                $detail->in_qty = $detail->quantity;
+                $totalIn += $qty;
+                $runningStock += $qty;
+                $detail->in_qty = $qty;
                 $detail->out_qty = 0;
             } else { // OUT
-                $totalOut += $detail->quantity;
-                $runningStock -= $detail->quantity;
+                $totalOut += $qty;
+                $runningStock -= $qty;
                 $detail->in_qty = 0;
-                $detail->out_qty = $detail->quantity;
+                $detail->out_qty = $qty;
             }
             $detail->running_stock = $runningStock;
         }
 
         $available = $totalIn - $totalOut;
 
-        // Sort descending so newest is on top
-        $details = $details->sortByDesc('created_at');
+        $details = $details->sortByDesc('created_at')->values();
 
-        // Paginate the collection manually
-        $page = request()->get('page', 1);
-        $perPage = 10;
-        $paginatedDetails = new LengthAwarePaginator(
-            $details->forPage($page, $perPage),
-            $details->count(),
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-
-        return view('Offline.StoreStock.history_store', compact('paginatedDetails', 'store', 'totalIn', 'totalOut', 'available', 'imageUrl'));
+        return view('Offline.StoreStock.history_store', compact('details', 'store', 'totalIn', 'totalOut', 'available', 'imageUrl'));
     }
 
     // public function store(Request $request)

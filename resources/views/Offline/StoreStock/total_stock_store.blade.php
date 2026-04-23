@@ -17,17 +17,16 @@
         </div>
 
         <div class="matrix-card">
+            
             <div class="toolbar">
-                <form method="GET" action="{{ route('store_stock.total') }}" id="storeForm" class="store-selector">
-                    <span class="store-badge">Active Store</span>
-                    <select name="store_id" onchange="document.getElementById('storeForm').submit()">
-                        @foreach($stores as $store)
-                            <option value="{{ $store->id }}" {{ request('store_id') == $store->id ? 'selected' : '' }}>
-                                {{ $store->store_name }} (STR-00{{ $store->id }})
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
+                <select onchange="window.location.href='{{ url('store-total-stock') }}/' + this.value" id="storeForm" class="store-selector">
+                    @foreach($stores as $store)
+                        <option value="{{ $store->enc_id }}"
+                            {{ isset($storeId) && $storeId == $store->id ? 'selected' : '' }}>
+                            {{ $store->store_name }} (STR-00{{ $store->id }})
+                        </option>
+                    @endforeach
+                </select>
             </div>
 
             <div class="table-wrap">
@@ -39,7 +38,7 @@
                                 <th>Product Identification</th>
                                 <th>Available Stock (quantity)</th>
                                 <th>Last Received</th>
-                                <th>Action</th> <td>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -89,8 +88,8 @@
                                 </td>
 
                                 <td>
-                                    <a href="{{ route('store_stock.history', ['store_id' => Crypt::encrypt($stock->store_id), 'product_id' => Crypt::encrypt($stock->product_id)]) }}" class="btn-action" style="text-decoration:none;">
-                                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    <a href="{{ route('store_stock.history', ['enc_store_id' => $stock->enc_store_id, 'enc_product_id' => $stock->enc_product_id]) }}" class="btn-action" style="text-decoration:none;">   
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                         View Details
                                     </a>
                                 </td>

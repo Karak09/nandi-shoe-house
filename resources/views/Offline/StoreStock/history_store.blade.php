@@ -4,7 +4,7 @@
 @section('content')
 <div class="workspace">
     
-    <a href="{{ route('store_stock.total') }}" class="btn-back">
+    <a href="{{ route('store_stock.total', request()->segment(3)) }}" class="btn-back">
         ← Back to Total Stock
     </a>
 
@@ -17,10 +17,10 @@
             @endif
             
             <div class="prod-details">
-                @php $firstItem = $paginatedDetails->first(); @endphp
+                @php $firstItem = $details->first(); @endphp
                 <h2 class="prod-name">
-                    {{ $firstItem->product->name ?? 'Unknown Product' }} 
-                    @if(!empty($firstItem->product->ben_name))
+                    {{ $firstItem?->product?->name ?? 'Unknown Product' }} 
+                    @if($firstItem && !empty($firstItem->product->ben_name))
                         <span class="bengali-name">({{ $firstItem->product->ben_name }})</span>
                     @endif
                 </h2>
@@ -47,14 +47,13 @@
     </div>
 
     <div class="table-card">
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
             <table class="datatable">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Product Details</th>
                         <th>Bill Date</th>
-                        <!-- <th>Bill No</th> -->
                         <th>MRP</th>
                         <th>Sale Price</th>
                         <th>Unit</th>
@@ -64,15 +63,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($paginatedDetails as $index => $row)
+                    @forelse($details as $row)
                     <tr>
-                        <td>{{ $paginatedDetails->firstItem() + $index }}</td>
+                        <td>{{ $loop->iteration }}</td>
                         <td>
                             <div style="font-weight:600;">{{ $row->product->name ?? 'N/A' }}</div>
                             <div style="font-size:11px; color:#71717a; margin-top:2px;">{{ is_array($row->barcode_no) ? implode(', ', $row->barcode_no) : ($row->barcode_no ?? '-') }}</div>
                         </td>
                         <td>{{ \Carbon\Carbon::parse($row->created_at)->format('d M Y, h:i A') }}</td>
-                        <!-- <td>{{ $row->bill_no ?? '-' }}</td> -->
                         <td>₹{{ number_format($row->mrp, 2) }}</td>
                         <td>₹{{ number_format($row->unit_price, 2) }}</td>
                         <td>{{ $row->uomRelation->keyword ?? 'Unit' }}</td>
@@ -97,18 +95,12 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10" style="text-align:center; padding:40px; color:#71717a;">No transactions found.</td>
+                        <td colspan="9" style="text-align:center; padding:40px; color:#71717a;">No transactions found.</td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        
-        @if($paginatedDetails->hasPages())
-            <div class="pagination-wrapper">
-                {{ $paginatedDetails->links() }}
-            </div>
-        @endif
     </div>
 </div>
 @endsection

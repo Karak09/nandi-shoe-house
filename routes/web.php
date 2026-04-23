@@ -102,8 +102,8 @@ Route::middleware(['auth'])->group(function () {
     // Store Stock
     Route::get('/store-transfers', [StoreStockController::class, 'index'])->name('store_stock.index');
    // Route::get('/print-barcodes', [StoreStockController::class, 'printBarcodes'])->name('store_stock.print');
-    Route::get('/store-total-stock', [StoreStockController::class, 'totalStock'])->name('store_stock.total');
-    Route::get('/store-total-stock/history/{store_id}/{product_id}', [StoreStockController::class, 'productHistory'])->name('store_stock.history');
+    Route::get('/store-total-stock/{store_id?}', [StoreStockController::class, 'totalStock'])->name('store_stock.total');
+    Route::get('/store-total-stock/history/{enc_store_id}/{enc_product_id}', [StoreStockController::class, 'productHistory'])->name('store_stock.history');    
     Route::get('/store-purchase-history', [StoreStockController::class, 'StorePurchaseHistory'])->name('store_purchase_history.inward');
     Route::get('/store-all-transaction', [StoreStockController::class, 'StoreAllTransaction'])->name('store_all_stock.transaction');
     Route::get('/store/purchase-history/print/{id}', [StoreStockController::class, 'printChallan'])->name('purchase.print');});
