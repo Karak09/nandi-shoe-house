@@ -34,7 +34,6 @@
                             <th>Vendor Name</th>
                             <th>Total Items</th>
                             <th>Total Amount</th>
-                            <th>Status</th>
                             <th data-sortable="false" style="text-align:right;">Action</th>
                         </tr>
                     </thead>
@@ -47,7 +46,6 @@
                             <td>{{ $c->vendor->vendor_name ?? 'Unknown' }}</td>
                             <td>{{ $c->transactions->count() }}</td>
                             <td class="num-col">₹ {{ number_format($c->total, 2) }}</td>
-                            <td><span class="badge">Stock Updated</span></td>
                             <td style="text-align:right;">
                                 <button class="btn btn-outline" style="padding:6px 12px; font-size:11px; cursor:pointer;" onclick='viewChallan(@json($c))'>👁️ View</button>
                             </td>
@@ -150,10 +148,10 @@
             <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
                 <thead style="background:#f1f5f9;">
                     <tr>
-                        <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">#</th>
+                        <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">ID</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Product</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Qty & UOM</th>
-                        <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Rate (₹)</th>
+                        <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Unit Price (₹)</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">MRP (₹)</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">GST %</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Total (₹)</th>

@@ -1,73 +1,7 @@
 @extends('Offline.layouts.app')
 @section('title', 'Godown Bulk Transfer - Shoe ERP')
-
-@push('styles')
-<style>
-    .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f8fafc;}
-    .topbar { background: #ffffff; padding: 16px 32px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; z-index: 5; }
-    .transfer-route { display: flex; align-items: center; gap: 16px; background: #f1f5f9; padding: 8px 20px; border-radius: 8px; border: 1px solid #cbd5e1; }
-    
-    .transfer-workspace { display: grid; grid-template-columns: 420px 1fr; height: calc(100vh - 75px); overflow: hidden; }
-
-    /* LEFT PANE */
-    .source-pane { background: #ffffff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden; }
-    .pane-header { padding: 20px; border-bottom: 1px solid #e2e8f0; background: #ffffff; }
-    .pane-title { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;}
-    .search-input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; background: #f8fafc; }
-    .search-input:focus { border-color: #4f46e5; background: #ffffff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
-
-    .stock-list { flex: 1; overflow-y: auto; padding: 16px; display:flex; flex-direction:column; gap:12px; }
-    .stock-item { padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: 0.2s; background: #ffffff; display: flex; justify-content: space-between; align-items: center; }
-    .stock-item:hover { border-color: #94a3b8; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-    .stock-item.added { border-color: #10b981; background: #f0fdf4; pointer-events: none; opacity: 0.7; }
-    
-    .s-name { font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
-    .s-meta { font-size: 11px; color: #64748b; font-family: monospace; font-weight:600;}
-    .btn-add-catalog { padding: 6px 12px; background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-    .stock-item:hover .btn-add-catalog { background: #4f46e5; color: white; border-color: #4f46e5; }
-    .badge-added { padding: 6px 12px; background: #10b981; color: white; border-radius: 6px; font-size: 12px; font-weight: 700; display: none; }
-    .stock-item.added .btn-add-catalog { display: none; }
-    .stock-item.added .badge-added { display: inline-block; }
-
-    /* RIGHT PANE */
-    .manifest-pane { background: #f8fafc; display: flex; flex-direction: column; overflow: hidden; }
-    .manifest-scroll { flex: 1; overflow-y: auto; padding: 24px 32px; display: flex; flex-direction: column; gap: 16px; }
-    .manifest-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .empty-state { text-align:center; padding:100px 20px; color:#64748b; }
-    
-    .m-item { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow: hidden; transition: 0.2s; }
-    .m-item.expanded { border-color: #4f46e5; box-shadow: 0 8px 16px rgba(79, 70, 229, 0.1); }
-    .m-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #ffffff; }
-    .m-header:hover { background: #f8fafc; }
-    .m-body { display: none; padding: 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; }
-    .expanded .m-body { display: block; }
-    
-    .c-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
-    .c-section { display: flex; flex-direction: column; gap: 16px; }
-    
-    .form-group { display: flex; flex-direction: column; gap: 6px; position:relative; margin-bottom:14px;}
-    .form-label { font-size: 12px; font-weight: 600; color: #334155; }
-    .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: 500; color: #0f172a; outline: none; background: #ffffff; transition: 0.2s; }
-    .form-control:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
-    .input-group { display: flex; align-items: center; position: relative; }
-    .input-group span { position: absolute; left: 12px; color: #64748b; font-weight: 700; font-size: 13px; }
-    .input-group .form-control { padding-left: 28px; font-family: monospace; font-weight: 600; }
-
-    .primary-box { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid #c7d2fe; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.05); margin-bottom: 24px; }
-    
-    /* ABSOLUTE ERROR MAPPING */
-    .error-text { position: absolute; bottom: -18px; left: 0; color: #ef4444; font-size: 11px; font-weight: 700; white-space: nowrap; }
-
-    .manifest-footer { background: #ffffff; border-top: 1px solid #cbd5e1; padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -4px 12px rgba(0,0,0,0.03); }
-    .btn-submit { padding: 16px 32px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-    .btn-submit:hover { background: #3730a3; }
-    .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
-
-    #printOverlay { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15, 23, 42, 0.95); z-index:99999; flex-direction:column; justify-content:center; align-items:center; color:white; text-align:center; }
-</style>
-@endpush
-
 @section('content')
+
 <div class="main-content">
     <header class="topbar">
         <div class="transfer-route">

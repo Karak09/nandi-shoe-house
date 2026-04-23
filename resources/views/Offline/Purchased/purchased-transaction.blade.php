@@ -25,10 +25,10 @@
                 <table class="datatable">
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Date & Time</th>
                             <th>Type</th>
                             <th>Reference Details</th>
-                            <th>Product & Batch</th>
                             <th style="text-align: right;">Quantity & Unit</th>
                             <th style="text-align: right;">Total Amount</th>
                             <th data-sortable="false" style="text-align: right;">Action</th>
@@ -43,6 +43,7 @@
                             $totalItems = $group->count();
                         @endphp
                         <tr>
+                            <td>{{ $loop->iteration }}</td>
                             <td>
                                 <div style="font-weight: 500;">{{ \Carbon\Carbon::parse($first->created_at)->format('d M Y') }}</div>
                                 <div class="td-sub">{{ \Carbon\Carbon::parse($first->created_at)->format('H:i A') }}</div>
@@ -58,11 +59,8 @@
                                 <div style="font-weight: 600; color:#0ea5e9;">Challan: {{ $first->purchaseDetails->challan_no ?? '-' }}</div>
                                 <div class="td-sub">Vendor: {{ $first->purchaseDetails->vendor->vendor_name ?? '-' }}</div>
                             </td>
-                            <td>
-                                <div style="font-weight: 600;">{{ $totalItems }} Unique Item(s)</div>
-                                <div class="td-sub">Batch: {{ $first->batch_no ? implode(', ', $first->batch_no) : '-' }}</div>
-                            </td>
-                            <td style="text-align: right;">
+                            
+                            <td style="font-weight: 600;">
                                 <div class="num-col" style="color: {{ $first->transaction_type == 1 ? '#059669' : '#ea580c' }};">
                                     {{ $first->transaction_type == 1 ? '+' : '-' }} {{ number_format($totalQty, 2) }} <span style="font-size:11px; color:#64748b;">TOTAL</span>
                                 </div>
@@ -135,7 +133,8 @@
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">#</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Product</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Qty & UOM</th>
-                        <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Rate (₹)</th>
+                        <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">MRP (₹)</th>
+                        <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Unit price (₹)</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">GST %</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Total (₹)</th>
                     </tr>

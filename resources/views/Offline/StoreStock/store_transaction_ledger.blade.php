@@ -1,34 +1,7 @@
 @extends('Offline.layouts.app')
 @section('title', 'Godown Transfer Ledger (OUT) - Shoe ERP')
-
-@push('styles')
-<style>
-    /* Identical to Purchase History */
-    .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f1f5f9; }
-    
-    .topbar { background: #ffffff; padding: 16px 32px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; z-index: 5; }
-    .store-selector { display: flex; align-items: center; gap: 12px; background: #f8fafc; padding: 6px 16px; border-radius: 30px; border: 1px solid #cbd5e1; }
-    .store-selector select { background: transparent; border: none; font-size: 14px; font-weight: 600; color: #0f172a; outline: none; cursor: pointer; padding-right: 8px; }
-    .store-badge { background: #ea580c; color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-    .workspace { padding: 24px; display: flex; flex-direction: column; gap: 24px; height: 100%; overflow: hidden; }
-
-    .card { background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .card-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-weight: 600; font-size: 16px; background-color: #f8fafc; color: #0f172a; display: flex; justify-content: space-between; align-items: center;}
-    
-    .table-container { overflow-y: auto; flex: 1; padding: 10px; }
-    
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { padding: 12px 16px; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; position: sticky; top: 0; background: #fff; z-index: 5; }
-    td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid #e2e8f0; color: #0f172a; vertical-align: middle; }
-    tr:hover td { background-color: #f8fafc; }
-    
-    .num-col { font-variant-numeric: tabular-nums; font-weight: 600; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background-color: #fff7ed; color: #ea580c; border:1px solid #fed7aa;}
-</style>
-@endpush
-
 @section('content')
+
 <div class="main-content">
     <header class="topbar">
         <h1 style="font-size: 18px; font-weight: 600; color: #0f172a; margin:0;">Godown Transfer Ledger (OUT)</h1>

@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Transfer Challan - {{ $challan->challan_no }}</title>
     <style>
+        /* Global Reset */
+        * { box-sizing: border-box; }
+
         /* --- Screen & General Styles --- */
         body { font-family: Arial, sans-serif; margin: 0; color: #000; font-size: 13px; position: relative; background: #f8fafc; }
         
@@ -27,15 +31,18 @@
 
         /* Header Layout */
         .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px; }
-        .header-logo { width: 65px; height: 65px; background-color: #0f172a; color: #fff; font-size: 26px; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-logo { width: 65px; height: 65px; background-color: #0f172a; color: #fff; font-size: 26px; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 12px; flex-shrink: 0;}
+        .header-right { text-align: right; }
         
         /* Address Boxes */
-        .details { display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 13px; }
-        .details-box { width: 48%; padding: 12px; border: 1px solid #ccc; background: rgba(255, 255, 255, 0.8); }
+        .details { display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 13px; gap: 20px;}
+        .details-box { width: 100%; padding: 12px; border: 1px solid #ccc; background: rgba(255, 255, 255, 0.8); }
         .details-box p { margin: 5px 0; }
 
-        /* Table */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; background: rgba(255, 255, 255, 0.9); }
+        /* Table Responsive Wrapper */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; background: rgba(255, 255, 255, 0.9); min-width: 600px; /* Forces table to stay readable on mobile */ }
         th, td { border: 1px solid #000; padding: 8px; text-align: left; vertical-align: top; }
         th { background-color: #f4f4f4; font-weight: bold; }
         .text-right { text-align: right; }
@@ -44,7 +51,7 @@
         /* Summary Section */
         .summary-container { display: flex; justify-content: flex-end; margin-bottom: 30px; }
         .summary { width: 350px; border: 1px solid #000; background: rgba(255, 255, 255, 0.9); }
-        .summary table { width: 100%; margin: 0; }
+        .summary table { width: 100%; margin: 0; min-width: auto; }
         .summary th, .summary td { border: none; padding: 6px 10px; font-size: 13px; }
         .summary .highlight-row { font-weight: bold; border-top: 1px dashed #000; }
         .summary .total-row { font-weight: bold; border-top: 2px solid #000; font-size: 15px; }
@@ -53,7 +60,36 @@
         .signatures { display: flex; justify-content: space-between; margin-top: 60px; }
         .sig-line { border-top: 1px solid #000; padding-top: 5px; width: 200px; text-align: center; font-weight: bold; }
 
-        /* --- PRINT STYLES --- */
+        /* =========================================
+           📱 MOBILE RESPONSIVE CSS FIXES
+           ========================================= */
+        @media (max-width: 768px) {
+            .no-print { flex-direction: column; gap: 15px; padding: 15px 20px; text-align: center; }
+            .btn { width: 100%; }
+            .document-wrapper { padding: 20px; min-height: auto; }
+            
+            /* Stack Header */
+            .header { flex-direction: column; gap: 20px; align-items: flex-start; }
+            .header-right { text-align: left; width: 100%; border-top: 1px dashed #ccc; padding-top: 15px;}
+            
+            /* Stack Address Boxes */
+            .details { flex-direction: column; gap: 15px; }
+            
+            /* Stretch Summary Box */
+            .summary-container { justify-content: center; width: 100%; }
+            .summary { width: 100%; }
+            
+            /* Stack Signatures */
+            .signatures { flex-direction: column; gap: 50px; align-items: center; margin-top: 40px; }
+            .sig-line { width: 100%; max-width: 250px; }
+            
+            /* Shrink Watermark for mobile */
+            .watermark { font-size: 40px; }
+        }
+
+        /* =========================================
+           🖨️ PRINT STYLES (A4 Desktop Layout)
+           ========================================= */
         @media print {
             /* Hides the Browser URL and Page Numbers */
             @page { size: A4; margin: 0; } 
@@ -62,11 +98,21 @@
             .no-print { display: none !important; }
             
             .document-wrapper { box-shadow: none; max-width: 100%; padding: 15mm; margin: 0; min-height: auto; }
-            .watermark { position: fixed; color: rgba(0, 0, 0, 0.04) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .watermark { position: fixed; color: rgba(0, 0, 0, 0.04) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 80px; }
+            
+            /* Force desktop layout on print */
+            .header { flex-direction: row; align-items: flex-start; }
+            .header-right { text-align: right; border-top: none; padding-top: 0;}
+            .details { flex-direction: row; }
+            .summary-container { justify-content: flex-end; }
+            .summary { width: 350px; }
+            .signatures { flex-direction: row; gap: 0; margin-top: 60px;}
+            .sig-line { width: 200px; }
             
             th { background-color: #f4f4f4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .header-logo { background-color: #0f172a !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .signatures { page-break-inside: avoid; }
+            .table-responsive { overflow: visible; }
         }
     </style>
 </head>
@@ -87,14 +133,14 @@
         
         <div class="content">
             <div class="header">
-                <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="header-left">
                     <div class="header-logo">NSH</div>
                     <div>
                         <h1 style="margin: 0; text-transform: uppercase; font-size: 24px; font-weight: 900; letter-spacing: 1px;">Nandi Shoe House</h1>
                         <p style="margin: 4px 0 0 0; font-size: 12px; color: #444;">Central Godown Facility, Sector V, Salt Lake City, Kolkata - 700091</p>
                     </div>
                 </div>
-                <div style="text-align: right;">
+                <div class="header-right">
                     <h2 style="margin: 0 0 8px 0; color: #000; text-transform: uppercase; font-size: 20px;">Stock Transfer Note</h2>
                     <div style="font-size: 13px; font-weight: bold;">Challan No: {{ $challan->challan_no }}</div>
                     <div style="font-size: 12px; margin-top: 4px;">Date: {{ \Carbon\Carbon::parse($challan->created_at)->format('d-M-Y h:i A') }}</div>
@@ -125,35 +171,37 @@
                 </div>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th class="text-center" style="width: 40px;">Sl No.</th>
-                        <th>Product Description & Batch</th>
-                        <th class="text-center" style="width: 50px;">UOM</th>
-                        <th class="text-right" style="width: 60px;">Qty</th>
-                        <th class="text-right" style="width: 80px;">MRP (₹)</th>
-                        <th class="text-right" style="width: 80px;">Unit Price (₹)</th>
-                        <th class="text-right" style="width: 100px;">Total Amount (₹)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($challan->storeStockDetails as $item)
-                    <tr>
-                        <td class="text-center">{{ $loop->iteration }}</td>
-                        <td>
-                            <strong>{{ optional($item->product)->name ?? 'N/A' }}</strong><br>
-                            <small style="color: #555;">Batch: {{ is_array($item->batch_no) ? implode(', ', $item->batch_no) : $item->batch_no }}</small>
-                        </td>
-                        <td class="text-center">{{ optional($item->uomRelation)->keyword ?? '' }}</td>
-                        <td class="text-right">{{ number_format($item->quantity, 2) }}</td>
-                        <td class="text-right">{{ number_format($item->mrp, 2) }}</td>
-                        <td class="text-right">{{ number_format($item->unit_price, 2) }}</td>
-                        <td class="text-right">{{ number_format($item->total_price, 2) }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 40px;">Sl No.</th>
+                            <th>Product Description & Batch</th>
+                            <th class="text-center" style="width: 50px;">UOM</th>
+                            <th class="text-right" style="width: 60px;">Qty</th>
+                            <th class="text-right" style="width: 80px;">MRP (₹)</th>
+                            <th class="text-right" style="width: 80px;">Unit Price (₹)</th>
+                            <th class="text-right" style="width: 100px;">Total Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($challan->storeStockDetails as $item)
+                        <tr>
+                            <td class="text-center">{{ $loop->iteration }}</td>
+                            <td>
+                                <strong>{{ optional($item->product)->name ?? 'N/A' }}</strong><br>
+                                <small style="color: #555;">Batch: {{ is_array($item->batch_no) ? implode(', ', $item->batch_no) : $item->batch_no }}</small>
+                            </td>
+                            <td class="text-center">{{ optional($item->uomRelation)->keyword ?? '' }}</td>
+                            <td class="text-right">{{ number_format($item->quantity, 2) }}</td>
+                            <td class="text-right">{{ number_format($item->mrp, 2) }}</td>
+                            <td class="text-right">{{ number_format($item->unit_price, 2) }}</td>
+                            <td class="text-right">{{ number_format($item->total_price, 2) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
             <div class="summary-container">
                 <div class="summary">
