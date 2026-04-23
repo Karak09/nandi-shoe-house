@@ -1,7 +1,7 @@
 @extends('Offline.layouts.app')
 @section('title', 'Premium Store Stock Dashboard - Shoe ERP')
-
 @section('content')
+
 <div class="main-content">
     <div class="workspace">
 

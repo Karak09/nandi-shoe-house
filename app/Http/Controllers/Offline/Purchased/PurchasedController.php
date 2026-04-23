@@ -18,16 +18,25 @@ use Carbon\Carbon;
 
 class PurchasedController extends CommonController
 {
+    // --- Prepare all Data PAGE ---
     public function index()
     {
-        $vendors = VendorMaster::where('is_active', true)->where('is_deleted', false)->get();
-        $products = Product::where('is_active', true)->where('is_deleted', false)->get();
-        $units = Unit::where('is_active', true)->where('is_deleted', false)->get();
+        $vendors = VendorMaster::where('is_active', true)
+            ->where('is_deleted', false)
+            ->get();
+
+        $products = Product::where('is_active', true)
+            ->where('is_deleted', false)
+            ->get();
+
+        $units = Unit::where('is_active', true)
+            ->where('is_deleted', false)
+            ->get();
 
         return view('Offline.Purchased.purchased', compact('vendors', 'products', 'units'));
     }
 
-    // Explicitly validate image sizes before touching the DB
+    // --- image size & other validate PAGE ---
     private function validateImages($request)
     {
         $imageSlots = ['fst', 'sec', 'trd', 'foth', 'fiv'];
@@ -47,6 +56,7 @@ class PurchasedController extends CommonController
         return $errors;
     }
 
+    // --- Product PurchasePAGE ---
     public function store(Request $request)
     {
         // 1. Strict Validation including Unique Challan No
@@ -163,9 +173,9 @@ class PurchasedController extends CommonController
         }
     }
 
+    // --- Product Purchase History PAGE ---
     public function history(Request $request)
     {
-        // Eager load uomRelation to show the unit name in the modal
         $query = PurchaseDetails::with(['vendor', 'transactions.product', 'transactions.uomRelation'])
             ->orderBy('challan_date', 'desc')
             ->orderBy('id', 'desc');
@@ -177,20 +187,81 @@ class PurchasedController extends CommonController
         }
 
         $challans = $query->get();
+
+        $challans->map(function ($challan) {
+            $challan->enc_product_id = $this->encryptData((string) $challan->product_id);
+            return $challan;
+        });
+
         return view('Offline.Purchased.purchased-history', compact('challans'));
     }
 
-    // 3. GODOWN STOCK PAGE
+    // --- Product Purchase In & Out PAGE ---
+    public function productHistory($enc_product_id)
+    {
+        // 1. Decrypt ID securely
+        $product_id = (int) $this->decryptData($enc_product_id);
+
+        if (!$product_id) {
+            abort(404, 'Invalid Link Data');
+        }
+
+        // 2. Fetch Transactions from Godown Ledger (PurchaseTransactionDetails)
+        $details = \App\Models\Purchased\PurchaseTransactionDetails::with(['product', 'uomRelation', 'purchaseDetails'])
+            ->where('product_id', $product_id)
+            ->orderBy('created_at', 'asc') // Ascending to calculate math perfectly
+            ->get();
+
+        // 3. Fetch Image
+        $imageRecord = \Illuminate\Support\Facades\DB::table('product_images')->where('product_id', $product_id)->first();
+        $imageUrl = ($imageRecord && $imageRecord->fst_image_doc) ? asset('storage/' . $imageRecord->fst_image_doc) : null;
+
+        $totalIn = 0;
+        $totalOut = 0;
+        $runningStock = 0;
+
+        // 4. Calculate Running Stock (1 = IN/Purchased, 2 = OUT/Transferred to Store)
+        foreach($details as $detail) {
+            $qty = (float) $detail->quantity;
+            
+            if($detail->transaction_type == 1) { 
+                $totalIn += $qty;
+                $runningStock += $qty;
+                $detail->in_qty = $qty;
+                $detail->out_qty = 0;
+            } else { 
+                $totalOut += $qty;
+                $runningStock -= $qty;
+                $detail->in_qty = 0;
+                $detail->out_qty = $qty;
+            }
+            $detail->running_stock = $runningStock;
+        }
+
+        $available = $totalIn - $totalOut;
+
+        // 5. Sort descending so newest is at the top
+        $details = $details->sortByDesc('created_at')->values();
+
+        return view('Offline.Purchased.godown_product_history', compact('details', 'totalIn', 'totalOut', 'available', 'imageUrl'));
+    }
+
+    // --- GODOWN STOCK PAGE ---
     public function stock()
     {
         $stocks = PurchasedStock::with(['product', 'uomRelation'])
             ->orderBy('quantity', 'desc')
             ->get();
             
+        $stocks->map(function ($stock) {
+            $stock->enc_product_id = $this->encryptData((string) $stock->product_id);
+            return $stock;
+        });
+
         return view('Offline.Purchased.purchased-stock', compact('stocks'));
     }
 
-    // 4. TRANSACTION LEDGER PAGE
+    // --- Product Purchase TRANSACTION LEDGER PAGE ---
     public function ledger(Request $request)
     {
         $query = PurchaseTransactionDetails::with(['purchaseDetails.vendor', 'product', 'uomRelation'])

@@ -96,18 +96,21 @@ Route::middleware(['auth'])->group(function () {
     // PURCHASE
     Route::get('/purchases', [PurchasedController::class, 'index'])->name('purchased.index');
     Route::get('/purchase-history', [PurchasedController::class, 'history'])->name('purchased.history');
+    Route::get('/godown-stock/history/{enc_product_id}', [PurchasedController::class, 'productHistory'])->name('godown_stock.history');
     Route::get('/godown-stock', [PurchasedController::class, 'stock'])->name('purchased.stock');
     Route::get('/transaction-ledger', [PurchasedController::class, 'ledger'])->name('purchased.ledger');
 
     // Store Stock
-    Route::get('/store-transfers', [StoreStockController::class, 'index'])->name('store_stock.index');
-   // Route::get('/print-barcodes', [StoreStockController::class, 'printBarcodes'])->name('store_stock.print');
-    Route::get('/store-total-stock/{store_id?}', [StoreStockController::class, 'totalStock'])->name('store_stock.total');
-    Route::get('/store-total-stock/history/{enc_store_id}/{enc_product_id}', [StoreStockController::class, 'productHistory'])->name('store_stock.history');    
-    Route::get('/store-purchase-history', [StoreStockController::class, 'StorePurchaseHistory'])->name('store_purchase_history.inward');
-    Route::get('/store-all-transaction', [StoreStockController::class, 'StoreAllTransaction'])->name('store_all_stock.transaction');
-    Route::get('/store/purchase-history/print/{id}', [StoreStockController::class, 'printChallan'])->name('purchase.print');});
-
+    // Route::prefix('store-stock')->group(function () {
+        Route::get('/store-transfers', [StoreStockController::class, 'index'])->name('store_stock.index');
+        Route::get('/store-total-stock/{store_id?}', [StoreStockController::class, 'totalStock'])->name('store_stock.total');
+        Route::get('/store-total-stock/history/{enc_store_id}/{enc_product_id}', [StoreStockController::class, 'productHistory'])->name('store_stock.history');    
+        Route::get('/store-purchase-history/{enc_store_id?}', [StoreStockController::class, 'StorePurchaseHistory'])->name('store_purchase_history.inward');
+        Route::get('/store/purchase-history/print/{id}', [StoreStockController::class, 'printChallan'])->name('purchase.print');
+        Route::get('/store/print-barcodes', [StoreStockController::class, 'printBarcodes'])->name('store_stock.print_barcodes');
+        Route::get('/store-all-transaction', [StoreStockController::class, 'StoreAllTransaction'])->name('store_all_stock.transaction');
+    // });
+    });
 /*
 |--------------------------------------------------------------------------
 | API AUTH (JWT)
