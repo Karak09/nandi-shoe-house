@@ -8,14 +8,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Crypt;
-use App\Models\Price\Price;
+use App\Models\PriceMaster\PriceMaster;
 use App\Models\Product\Product;
 
 class PriceController extends CommonController
 {
     public function index()
     {
-        $prices = Price::with('product')
+        $prices = PriceMaster::with('product')
             ->where('is_deleted', false)
             ->orderBy('id', 'desc')
             ->get();
@@ -53,12 +53,12 @@ class PriceController extends CommonController
             // Total GST is just CGST + SGST
             $data['gst_rate'] = floatval($request->cgst_rate ?? 0) + floatval($request->sgst_rate ?? 0);
 
-            Price::create($data);
+            PriceMaster::create($data); 
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Price configuration added!']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => 'error', 'message' => 'Save failed.'], 500);
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
 

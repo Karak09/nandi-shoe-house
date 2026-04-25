@@ -32,6 +32,9 @@
             <a href="/products" class="nav-item {{ request()->routeIs('products.store') ? 'active' : '' }}">
                 Products Master
             </a>
+            <a href="/prices" class="nav-item {{ request()->routeIs('price.index') ? 'active' : '' }}">
+                Price Master
+            </a>
         </div>
                 
         <div class="sidebar-section" data-allowed-roles="0,1">

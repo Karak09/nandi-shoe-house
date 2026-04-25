@@ -106,6 +106,7 @@
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; color:#64748b;">${i+1}</td>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; font-weight:600;">${t.product ? t.product.name : 'N/A'}${benName}</td>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; font-weight:600;">${t.quantity} <span style="font-size:11px; color:#64748b; font-weight:400;">${uom}</span></td>
+                <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0;">₹${t.mrp}</td>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0;">₹${t.unit_price}</td>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; color:#ef4444;">${t.gst}%</td>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; font-weight:700;">₹${t.total_price}</td>
