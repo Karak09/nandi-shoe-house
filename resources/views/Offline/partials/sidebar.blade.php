@@ -67,6 +67,9 @@
             <a href="/store-all-transaction" class="nav-item {{ request()->routeIs('store_all_stock.transaction') ? 'active' : '' }}">
                 Stock All Transfer Transaction History
             </a>
+            <a href="/combo/list" class="nav-item {{ request()->routeIs('combo.list') ? 'active' : '' }}">
+                Combo List
+            </a>
         </div>
 
         <div class="sidebar-section" data-allowed-roles="0,1,4">

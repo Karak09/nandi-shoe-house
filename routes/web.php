@@ -16,7 +16,7 @@ use App\Http\Controllers\Offline\Price\PriceController;
 use App\Http\Controllers\Offline\Purchased\PurchasedController;
 use App\Http\Controllers\Offline\DashboardController;
 use App\Http\Controllers\Offline\StoreStock\StoreStockController;
-
+use App\Http\Controllers\Offline\Combo\ComboController;
 
 /*
 |--------------------------------------------------------------------------
@@ -110,6 +110,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/store/print-barcodes', [StoreStockController::class, 'printBarcodes'])->name('store_stock.print_barcodes');
         Route::get('/store-all-transaction', [StoreStockController::class, 'StoreAllTransaction'])->name('store_all_stock.transaction');
     // });
+
+    Route::prefix('combo')->group(function () {
+        Route::get('/product', [ComboController::class, 'index'])->name('combo.index');
+        Route::post('/item/store', [ComboController::class, 'store'])->name('combo.store');
+        Route::get('/get-store-products/{storeId}', [ComboController::class, 'getStoreProducts'])->name('store.products');
+        Route::get('/list', [ComboController::class, 'list'])->name('combo.list');
+        Route::get('/details/{encrypted_id}', [ComboController::class, 'details'])->name('combo.details');
+        Route::get('/get-print-data/{encrypted_id}', [ComboController::class, 'getPrintData'])->name('combo.print_data');
+    });
+
     });
 /*
 |--------------------------------------------------------------------------

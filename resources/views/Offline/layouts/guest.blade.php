@@ -19,7 +19,7 @@
         </div>
         <div class="header-status">
             <!-- <div class="secure-badge"></div> -->
-            New User Registration
+            <!-- New User Registration -->
         </div>
     </header>
 
