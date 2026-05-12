@@ -277,16 +277,21 @@ class StoreStockController extends CommonController
         foreach($details as $detail) {
             $qty = (float) $detail->quantity;
             
-            if($detail->transaction_type == 1) { // IN
+            if ($detail->transaction_type == 1) { // IN
                 $totalIn += $qty;
                 $runningStock += $qty;
                 $detail->in_qty = $qty;
                 $detail->out_qty = 0;
-            } else { // OUT
+
+            } elseif ($detail->transaction_type == 2 || $detail->transaction_type == 3) { // OUT
                 $totalOut += $qty;
                 $runningStock -= $qty;
                 $detail->in_qty = 0;
                 $detail->out_qty = $qty;
+            } else {
+                // Optional: handle unknown types
+                $detail->in_qty = 0;
+                $detail->out_qty = 0;
             }
             $detail->running_stock = $runningStock;
         }
