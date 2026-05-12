@@ -12,13 +12,13 @@ class StoreStockDetails extends Model {
     
     // ADDED the new columns
     protected $fillable = [
-        'transaction_type','purchase_details_id', 'user_id', 'store_id', 'received_from', 
+        'transaction_type','purchase_details_id','combo_id', 'user_id', 'store_id', 'received_from', 
         'product_id', 'quantity', 'uom', 'mrp', 'unit_price', 'total_price', 
         'batch_no', 'barcode_no', 'no_of_pack', 'each_pack_quantity', 'gst', 
         'cgst', 'sgst', 'is_packet'
     ];
     
-    protected $casts = ['batch_no' => 'array'];
+    protected $casts = ['batch_no' => 'array','barcode_no' => 'array'];
 
     public function product()
     {
