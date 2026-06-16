@@ -16,8 +16,9 @@ return new class extends Migration
 
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('store_id');
-            $table->foreignId('purchase_details_id')->constrained('purchase_details')->onDelete('cascade')->nullable();
-            $table->foreignId('combo_id')->constrained('combo_products')->onDelete('cascade')->nullable();
+            $table->foreignId('purchase_details_id')->nullable()->constrained('purchase_details')->onDelete('cascade');
+            $table->foreignId('combo_id')->nullable()->constrained('combo_products')->onDelete('cascade');
+            $table->foreignId('requisition_details_id')->nullable()->constrained('requisition_details')->onDelete('cascade');
             $table->unsignedBigInteger('received_from')->nullable();
             $table->unsignedBigInteger('product_id');
             $table->decimal('quantity', 10, 2);

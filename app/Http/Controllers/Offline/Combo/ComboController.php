@@ -85,6 +85,7 @@ class ComboController extends CommonController
                 $combo->combo_code = $combo_ref;
                 $combo->product_id = $target_id;
                 $combo->is_active  = true;
+                $combo->ip_address= $request->ip(); //newly added
                 $combo->save();
 
                 // 2. Process Ingredients (OUTWARD - Type 3)

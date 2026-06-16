@@ -177,6 +177,7 @@ class PurchasedController extends CommonController
     public function history(Request $request)
     {
         $query = PurchaseDetails::with(['vendor', 'transactions.product', 'transactions.uomRelation'])
+            ->where('transaction_type', 1)
             ->orderBy('challan_date', 'desc')
             ->orderBy('id', 'desc');
 

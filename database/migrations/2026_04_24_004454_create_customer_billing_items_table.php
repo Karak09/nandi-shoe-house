@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('product_name', 120);
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('cat_id')->comment('Category ID');
+            $table->string('pro_size', 120)->nullable();
             $table->string('product_code', 120)->nullable();
             $table->unsignedBigInteger('uom')->nullable();
             

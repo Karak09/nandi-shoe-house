@@ -4,6 +4,7 @@ namespace App\Models\Stores;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Users\User;
 use App\Models\{StateMaster, DistrictMaster,BlockMaster,GramPanchayatMaster,
                 MunicipalityMaster,PostOfficeMaster,VillageMaster,WardMaster};
 
@@ -12,6 +13,7 @@ class StoreMaster extends Model {
     protected $table = 'store_masters';
 
     protected $fillable = [
+        'user_id',
         'store_name',
         'address',
         'flat_no',
@@ -30,6 +32,11 @@ class StoreMaster extends Model {
         'is_active',
         'is_deleted'
     ];
+
+    public function storeUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     public function state(): BelongsTo
     {

@@ -5,8 +5,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable; // Extending Authenticatable for login features
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Users\UserDetail;
+use App\Models\Users\UsersDetails;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
+use App\Models\Users\UserTypeMaster;
 
 class User extends Authenticatable implements JWTSubject
 {

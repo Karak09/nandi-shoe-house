@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\Stores\StoreMaster;
-use App\Models\Users\User;
 use App\Http\Controllers\Common\CommonController;
 use App\Models\{StateMaster, DistrictMaster,BlockMaster,GramPanchayatMaster,
                 MunicipalityMaster,PostOfficeMaster,VillageMaster,WardMaster};
@@ -17,42 +16,24 @@ class StoreMasterController extends CommonController
 {
     public function index()
     {
-        $stores = StoreMaster::with(['storeUser.details', 'state', 'district', 'block', 'gramPanchayat', 'village', 'postOffice', 'municipality', 'ward'])
+        $stores = StoreMaster::with(['state', 'district', 'block', 'gramPanchayat', 'village', 'postOffice', 'municipality', 'ward'])
             ->where('is_deleted', false)
             ->orderBy('id', 'desc')
             ->get();
-            
         $states = StateMaster::where('is_active', true)->get();
-
-        // 1. DEFINE the variable
-        $storeUsers = User::where('user_type_id', 3)->get();
 
         $stores->map(function ($s) {
             $s->encrypted_id = Crypt::encryptString($s->id);
             return $s;
         });
 
-        // 2. PASS the variable to the view inside compact()
-        return view('Offline.Store.store_reg', compact('stores', 'states', 'storeUsers'));
-    }
-
-    public function getStoreUsers()
-    {
-        $users = User::with('details')->where('user_type_id', 3)->get()->map(function($user) {
-            return [
-                'id' => $user->id,
-                'full_name' => $user->details ? trim($user->details->f_name . ' ' . $user->details->l_name) : $user->username
-            ];
-        });
-        
-        return response()->json($users);
+        return view('Offline.Store.store_reg', compact('stores', 'states'));
     }
 
     public function store(Request $request)
     {
         // 1. Dynamic Validation Rules matching HTML names exactly
         $rules = [
-            'user_id' => 'required|integer|unique:store_masters,user_id,NULL,id,is_deleted,0',
             'store_name'  => 'required|string|max:120',
             'contact_no'  => 'required|digits:10|unique:store_masters,contact_no,NULL,id,is_deleted,0',
             'email'       => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com)$/i', 'unique:store_masters,email,NULL,id,is_deleted,0'],
@@ -74,8 +55,6 @@ class StoreMasterController extends CommonController
         }
 
         $messages = [
-            'user_id.required' => 'Please select a Store User.',
-            'user_id.unique'   => 'This user already has another store.',
             'store_name.required' => 'Please fill the Store Name.',
             'contact_no.unique'   => 'Mobile Number is already assigned.',
             'email.unique'        => 'Email is already assigned.',
@@ -120,7 +99,6 @@ class StoreMasterController extends CommonController
         $id = Crypt::decryptString($encrypted_id);
         
         $rules = [
-            'user_id' => 'required|integer|unique:store_masters,user_id,NULL,id,is_deleted,0',
             'store_name'  => 'required|string|max:120',
             'contact_no'  => 'required|digits:10|unique:store_masters,contact_no,' . $id . ',id,is_deleted,0',
             'email'       => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com)$/i', 'unique:store_masters,email,' . $id . ',id,is_deleted,0'],

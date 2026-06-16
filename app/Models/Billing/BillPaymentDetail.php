@@ -9,18 +9,13 @@ class BillPaymentDetail extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     */
     protected $table = 'bill_payment_details';
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'std_id',
         'bill_no',
         'payment_mode',
+        'transaction_no',
         'phone',
         'total_amount',
         'recived_money',
@@ -33,9 +28,6 @@ class BillPaymentDetail extends Model
         'age'
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'total_amount' => 'decimal:2',
         'recived_money' => 'decimal:2',
@@ -49,25 +41,15 @@ class BillPaymentDetail extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * Payment Status Constants
-     */
     const STATUS_UNPAID = 0;
     const STATUS_PAID   = 1;
     const STATUS_FAILED = 2;
 
-    /**
-     * Relationship: Link to Store Transfer Details
-     */
     public function storeTransfer()
     {
-        // Adjust the namespace if StoreTransferDetail is elsewhere
         return $this->belongsTo(\App\Models\StoreStock\StoreTransferDetail::class, 'std_id');
     }
 
-    /**
-     * Scope to filter by current month/year
-     */
     public function scopeCurrentMonth($query)
     {
         return $query->where('bill_month', now()->month)

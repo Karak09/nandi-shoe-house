@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->string('flat_no', 120)->nullable();
 
+            $table->foreignId('user_id')->constrained('users');
             $table->foreignId('state_id')->constrained('state_masters');
             $table->foreignId('district_id')->constrained('district_masters');
             $table->foreignId('block_id')->nullable()->constrained('block_masters');

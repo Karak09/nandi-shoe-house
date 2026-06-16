@@ -16,7 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('std_id')->comment('store_transfer_details table id');
             $table->string('bill_no', 150)->unique()->comment('Serial wise: customer 00, online 01 etc');
             
-            $table->unsignedSmallInteger('payment_mode'); 
+            $table->unsignedSmallInteger('payment_mode'); //1 means cash,2 means online,3 means card
+            $table->integer('transaction_no');
             $table->string('phone', 15)->nullable();
             
             $table->decimal('total_amount', 12, 2)->default(0.00);

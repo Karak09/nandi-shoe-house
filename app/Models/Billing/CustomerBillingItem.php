@@ -8,21 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class CustomerBillingItem extends Model
 {
     use HasFactory;
-
-    /**
-     * The table associated with the model.
-     */
     protected $table = 'customer_billing_items';
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'std_id',
         'sl_no',
         'product_name',
         'product_id',
         'cat_id',
+        'pro_size',
         'product_code',
         'quantity',
         'barcode_no',
@@ -35,12 +29,9 @@ class CustomerBillingItem extends Model
         'each_packet_quantity'
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
-        'barcode_no' => 'array', // Automatically handles JSON to Array
-        'batch_no' => 'array',   // Automatically handles JSON to Array
+        'barcode_no' => 'array',
+        'batch_no' => 'array',  
         'quantity' => 'decimal:2',
         'mrp_price' => 'decimal:2',
         'sale_price' => 'decimal:2',
@@ -51,17 +42,11 @@ class CustomerBillingItem extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * Relationship: Link to Store Transfer Details (Parent transaction)
-     */
     public function storeTransfer()
     {
         return $this->belongsTo(\App\Models\StoreStock\StoreTransferDetail::class, 'std_id');
     }
 
-    /**
-     * Helper: Calculate total for this specific line item
-     */
     public function getTotalAttribute()
     {
         return $this->quantity * $this->sale_price;

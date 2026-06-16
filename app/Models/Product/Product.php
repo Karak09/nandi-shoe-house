@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\Category\Category;
 use App\Models\Unit\Unit;
+use App\Models\Unit\Unit_Convert;
+use App\Models\PriceMaster\PriceMaster;
+use App\Models\Product\ProductImage;
+use App\Models\StoreStock\StoreStock;
 
 class Product extends Model {
     protected $table = 'product_masters';
@@ -30,5 +34,24 @@ class Product extends Model {
     public function uomRelation(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'uom');
+    }
+
+    public function priceMaster()
+    {
+        return $this->hasOne(PriceMaster::class, 'product_id', 'id');
+    }
+
+    public function productImage()
+    {
+        return $this->hasOne(ProductImage::class, 'product_id', 'id');
+    }
+
+    public function storeStock()
+    {
+        return $this->hasMany(StoreStock::class, 'product_id', 'id');
+    }
+
+    public function unit() {
+        return $this->belongsTo(Unit_Convert::class, 'uom', 'id');
     }
 }

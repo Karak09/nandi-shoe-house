@@ -32,9 +32,9 @@ return new class extends Migration
             $table->decimal('pro_per_unit_price', 10, 2)->default(0);
             $table->decimal('pro_size', 10, 2)->default(0);
             
-            $table->decimal('cgst_rate', 5, 2)->default(0);
-            $table->decimal('sgst_rate', 5, 2)->default(0);
-            $table->decimal('gst_rate', 5, 2)->default(0);
+            $table->decimal('cgst_rate', 5, 2)->nullable();
+            $table->decimal('sgst_rate', 5, 2)->nullable();
+            $table->decimal('gst_rate', 5, 2)->nullable();
             
             $table->boolean('is_active')->default(true);
             $table->boolean('is_deleted')->default(false);

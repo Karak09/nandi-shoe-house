@@ -9,10 +9,20 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => bcrypt('123456'),
+        // User::create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        //     'password' => bcrypt('123456'),
+        // ]);
+
+        $this->call([
+            UserTypeSeeder::class,
+            SuperAdminSeeder::class,
+            DefaultUsersSeeder::class,
+            CountryMasterSeeder::class,
+            StateMasterSeeder::class,
+            DistrictMasterSeeder::class,
+            LocationHierarchySeeder::class,
         ]);
     }
 }

@@ -4,6 +4,10 @@ namespace App\Models\StoreStock;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Billing\CustomerBillingItem;
+use App\Models\StoreStock\StoreStockDetails;
+use App\Models\Users\User;
+use App\Models\Stores\StoreMaster;
 
 class StoreTransferDetail extends Model
 {
@@ -48,8 +52,8 @@ class StoreTransferDetail extends Model
      * Get the user who performed the transfer.
      */
     public function user()
-    {
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    { 
+        return $this->belongsTo(User::class, 'user_id'); 
     }
 
     /**
@@ -58,6 +62,25 @@ class StoreTransferDetail extends Model
     public function store()
     {
         return $this->belongsTo(\App\Models\Store::class, 'store_id');
+    }
+
+     public function storeStockDetails()
+    {
+        return $this->hasMany(
+            StoreStockDetails::class,
+            'store_id',
+            'store_id'
+        );
+    }
+
+    // ADD THIS
+    public function customerBillingItems()
+    {
+        return $this->hasMany(
+            CustomerBillingItem::class,
+            'std_id',
+            'id'
+        );
     }
 
     /**

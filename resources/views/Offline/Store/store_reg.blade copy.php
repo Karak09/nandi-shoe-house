@@ -1,4 +1,4 @@
-@extends('Offline.layouts.app')
+    @extends('Offline.layouts.app')
     @section('title', 'Store Master - Shoe ERP')
     @section('page_title', 'Retail Store Management')
 
@@ -14,13 +14,6 @@
                 <form id="storeForm">
                     <input type="hidden" id="encrypted_id" name="encrypted_id">
                     
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label class="form-label">Choose Store User <span style="color:red">*</span></label>
-                        <select id="user_id" name="user_id" class="form-control" required>
-                            <option value="">Select User</option>
-                            </select>
-                    </div>
-
                     <div class="form-group" style="margin-bottom: 16px;">
                         <label class="form-label">Store Name <span style="color:red">*</span></label>
                         <input type="text" id="store_name" name="store_name" class="form-control" required>
@@ -222,36 +215,6 @@
         // 1. Force novalidate on the form via JS just in case it's missing in HTML
         document.getElementById('storeForm').setAttribute('novalidate', true);
 
-        // --- FETCH STORE USERS API ---
-        window.fetchStoreUsers = async function() {
-            const select = document.getElementById('user_id'); // Updated ID
-            
-            if (select.options.length > 1) return; 
-
-            try {
-                const res = await fetch('/api/get-store-users', {
-                    method: 'GET',
-                    headers: { 
-                        'Authorization': 'Bearer ' + localStorage.getItem('erp_jwt_token'),
-                        'Accept': 'application/json'
-                    }
-                });
-                
-                const users = await res.json();
-                
-                select.innerHTML = '<option value="">Select User</option>';
-                users.forEach(user => {
-                    // Using user.full_name from our mapped Controller response
-                    select.insertAdjacentHTML('beforeend', `<option value="${user.id}">${user.full_name}</option>`);
-                });
-            } catch (error) {
-                console.error('Failed to fetch store users:', error);
-            }
-        };
-
-        // Trigger the fetch when the user clicks/focuses on the dropdown
-        document.getElementById('user_id').addEventListener('focus', fetchStoreUsers);
-
         document.getElementById('storeForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -304,6 +267,7 @@
                 btn.disabled = false; 
                 btn.innerHTML = encId ? 'Update Details' : 'Save Details';
 
+                // Print the exact error to your browser console so you can always see it!
                 console.log("LARAVEL VALIDATION ERRORS:", error);
 
                 toastr.error(error.message || 'Please fix the errors highlighted below.');
@@ -315,23 +279,28 @@
                         let field = document.querySelector(`[name="${fieldName}"]`);
                         
                         if (field) {
+                            // Special handling for Radio Buttons (Area Type)
                             if (field.type === 'radio') {
                                 let container = field.closest('.form-group');
                                 container.style.border = '1px solid #ef4444';
                                 container.style.padding = '8px';
                                 container.style.borderRadius = '6px';
                                 
+                                // Inject error at the bottom of the group
                                 if (!container.querySelector('.custom-error-text')) {
                                     container.insertAdjacentHTML('beforeend', `<div class="custom-error-text" style="color: #ef4444; font-size: 11px; margin-top: 8px; font-weight: 600;">${msg}</div>`);
                                 }
                             } else {
+                                // Standard Text / Select Inputs
                                 field.style.borderColor = '#ef4444';
                                 
+                                // Remove old error text if it exists to prevent duplicates
                                 let sibling = field.nextElementSibling;
                                 if (sibling && sibling.classList.contains('custom-error-text')) {
                                     sibling.remove();
                                 }
                                 
+                                // Inject new error text
                                 field.insertAdjacentHTML('afterend', `<div class="custom-error-text" style="color: #ef4444; font-size: 11px; margin-top: 4px; font-weight: 600;">${msg}</div>`);
                             }
                         }
@@ -340,11 +309,13 @@
             }
         });
 
+        // --- ASYNC HELPER FOR EDITING DROPDOWNS ---
         const setSelectValue = async (elementId, value) => {
             const el = document.getElementById(elementId);
             if(el && value) {
                 el.value = value;
                 el.dispatchEvent(new Event('change', { bubbles: true }));
+                // Wait a bit for the global fetch to complete
                 await new Promise(r => setTimeout(r, 600)); 
             }
         };
@@ -353,11 +324,6 @@
         window.editRecord = async function(record) {
             document.getElementById('formTitle').innerText = 'Edit Store';
             document.getElementById('encrypted_id').value = record.encrypted_id;
-            
-            // Populate user_type_id
-            await window.fetchStoreUsers();
-            document.getElementById('user_id').value = record.user_id; 
-            document.getElementById('user_id').disabled = true;
             document.getElementById('store_name').value = record.store_name;
             document.getElementById('contact_no').value = record.contact_no;
             document.getElementById('email').value = record.email;
@@ -366,17 +332,21 @@
             document.getElementById('pin').value = record.pin;
             document.getElementById('is_active').checked = record.is_active == 1;
 
+            // 1. Set State and perfectly await District data
             document.getElementById('state_id').value = record.state_id;
             await window.fetchLocationData('/api/get-districts/', record.state_id, 'district_id');
             document.getElementById('district_id').value = record.district_id;
             
+            // Show Area Type section
             document.getElementById('area_type_section').style.display = 'block';
 
+            // 2. Safely check if it's Rural (Handles old NULL area_type data perfectly)
             if (record.area_type === 'rural' || record.block_id || record.gp_id) {
                 document.getElementById('type_rural').checked = true;
                 document.getElementById('rural_section').style.display = 'block';
                 document.getElementById('urban_section').style.display = 'none';
 
+                // Await each fetch perfectly in sequence (No more setTimeout guessing!)
                 await window.fetchLocationData('/api/get-blocks/', record.district_id, 'block_id');
                 document.getElementById('block_id').value = record.block_id;
 
@@ -395,6 +365,7 @@
                     document.getElementById('post_id').value = record.post_id;
                 }
 
+            // 3. Safely check if it's Urban
             } else if (record.area_type === 'urban' || record.muni_id || record.ward_id) {
                 document.getElementById('type_urban').checked = true;
                 document.getElementById('urban_section').style.display = 'block';
@@ -419,7 +390,7 @@
             document.getElementById('formTitle').innerText = 'Register New Store';
             document.getElementById('btnSubmit').innerText = 'Save Details';
             document.getElementById('btnSubmit').disabled = false;
-            document.getElementById('user_id').disabled = false;
+            
             document.getElementById('district_id').innerHTML = '<option value="">Select District</option>';
             document.getElementById('district_id').disabled = true;
             document.getElementById('area_type_section').style.display = 'none';
@@ -447,12 +418,10 @@
 
         // --- VIEW ---
         window.viewRecord = function(record) {
+            // Helper function: returns the value, or '-' if it is empty/null
             const val = (item) => item ? item : '-';
 
-            const fName = record.store_user?.details?.f_name || '';
-            const lName = record.store_user?.details?.l_name || '';
-            const fullName = `${fName} ${lName}`.trim() || '-';
-
+            // 1. Auto-detect Area Type safely (fixes old database records)
             let areaType = '-';
             if (record.area_type && record.area_type !== null) {
                 areaType = record.area_type;
@@ -462,6 +431,7 @@
                 areaType = 'urban';
             }
 
+            // 2. Build ONLY the correct Geography HTML
             let geoHtml = '';
             if (areaType === 'rural') {
                 geoHtml = `
@@ -479,14 +449,13 @@
                 geoHtml = `<p style="margin:0; grid-column: 1 / -1; color:#ef4444; font-style:italic;">No geographic data saved.</p>`;
             }
 
-            // Injected Store User Name into the view Modal
+            // 3. Assemble the final layout
             const content = `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <p style="margin:0;"><strong>Store User:</strong> <br><span style="color:#0f172a; font-weight:600;">${fullName}</span></p>
                     <p style="margin:0;"><strong>Store Name:</strong> <br><span style="color:#0f172a; font-weight:600;">${val(record.store_name)}</span></p>
                     <p style="margin:0;"><strong>Contact No:</strong> <br><span style="color:#0f172a;">${val(record.contact_no)}</span></p>
                     <p style="margin:0;"><strong>Email:</strong> <br><span style="color:#0f172a;">${val(record.email)}</span></p>
-                    <p style="margin:0; grid-column: 1 / -1;"><strong>Status:</strong> <br>${record.is_active ? '<span style="color:#10b981; font-weight:bold;">Active</span>' : '<span style="color:#ef4444; font-weight:bold;">Inactive</span>'}</p>
+                    <p style="margin:0;"><strong>Status:</strong> <br>${record.is_active ? '<span style="color:#10b981; font-weight:bold;">Active</span>' : '<span style="color:#ef4444; font-weight:bold;">Inactive</span>'}</p>
                 </div>
                 
                 <hr style="border:0; border-top: 1px dashed #cbd5e1; margin: 16px 0;">

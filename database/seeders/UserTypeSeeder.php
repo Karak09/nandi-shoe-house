@@ -12,10 +12,11 @@ class UserTypeSeeder extends Seeder
         $roles = [
             'Admin',
             'Sales Manager',
-            'Reporter',
+            'Store Manager',
             'Account',
             'Purchase Entry',
-            'Stock Transfer'
+            'Stock Transfer',
+            '3rd party'
         ];
 
         foreach ($roles as $role) {
