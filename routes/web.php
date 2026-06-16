@@ -17,6 +17,9 @@ use App\Http\Controllers\Offline\Purchased\PurchasedController;
 use App\Http\Controllers\Offline\DashboardController;
 use App\Http\Controllers\Offline\StoreStock\StoreStockController;
 use App\Http\Controllers\Offline\Combo\ComboController;
+use App\Http\Controllers\Offline\Sale\StoreSaleController;
+use App\Http\Controllers\Offline\Requisition\RequisitionController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -120,7 +123,23 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/get-print-data/{encrypted_id}', [ComboController::class, 'getPrintData'])->name('combo.print_data');
     });
 
+    Route::prefix('store-sale')->group(function () {
+        Route::get('/', [StoreSaleController::class, 'index'])->name('store.sale.index');
+        Route::get('/get-store-products/{storeId}', [StoreSaleController::class, 'getStoreProducts'])->name('get.store.products');
+        Route::post('/checkout', [StoreSaleController::class, 'checkout'])->name('store.sale.checkout');
+        Route::get('/print-bill/{id}', [StoreSaleController::class, 'printBill'])->name('store.sale.print');
     });
+
+    Route::prefix('requisition')->group(function () {
+        Route::get('/create', [RequisitionController::class, 'create'])->name('requisition.create');
+        Route::post('/store', [RequisitionController::class, 'store'])->name('requisition.store');
+        Route::get('/list', [RequisitionController::class, 'index'])->name('requisition.list');
+        Route::get('/get-products', [RequisitionController::class, 'getProducts'])->name('requisition.get_products');
+        Route::get('/edit/{encrypted_id}', [RequisitionController::class, 'edit'])->name('requisition.edit');
+        Route::post('/process/{encrypted_id}', [RequisitionController::class, 'process'])->name('requisition.process');
+    });
+
+});
 /*
 |--------------------------------------------------------------------------
 | API AUTH (JWT)
@@ -155,6 +174,8 @@ Route::prefix('api')->middleware(['jwt.role:1,2'])->group(function () {
     Route::post('/stores', [StoreMasterController::class, 'store']);
     Route::put('/stores/{encrypted_id}', [StoreMasterController::class, 'update']);
     Route::delete('/stores/{encrypted_id}', [StoreMasterController::class, 'destroy']);
+    Route::get('/get-store-users', [StoreMasterController::class, 'getStoreUsers']);
+
 
     // Online Shop
     Route::post('/online-shops', [OnlineShopController::class, 'store']);
