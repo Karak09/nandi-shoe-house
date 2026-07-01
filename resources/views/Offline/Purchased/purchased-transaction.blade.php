@@ -2,9 +2,6 @@
 @section('title', 'Transaction Ledger - Shoe ERP')
 @section('content')
 
-<div class="main-content">
-    <div class="workspace">
-        
         <form method="GET" action="{{ route('purchased.ledger') }}" class="global-date-filter">
             <div class="filter-group">
                 <label>Start Date</label>
@@ -75,16 +72,14 @@
                 </table>
             </div>
         </div>
-    </div>
-</div>
 
-<div id="viewModal" onclick="this.style.display='none'" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding: 20px;">
-    <div onclick="event.stopPropagation()" style="background:#fff; padding:24px; border-radius:8px; width:750px; max-height: 90vh; display: flex; flex-direction: column;">
+<div id="viewModal" onclick="this.style.display='none'" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding: 16px;">
+    <div onclick="event.stopPropagation()" style="background:#fff; padding:20px; border-radius:8px; max-width:800px; width:100%; max-height: 90vh; display: flex; flex-direction: column;">
         <h2 style="font-size: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px; display:flex; justify-content:space-between;">
             <span>Transaction Ledger Details</span>
             <button onclick="document.getElementById('viewModal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:#64748b;">&times;</button>
         </h2>
-        <div id="modalContent" style="overflow-y: auto; flex-grow: 1;"></div>
+        <div id="modalContent" style="overflow-y: auto; overflow-x: auto; flex-grow: 1;"></div>
     </div>
 </div>
 
@@ -114,13 +109,13 @@
         });
 
         const html = `
-            <div style="background:#f8fafc; padding:16px; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:16px; display:flex; justify-content:space-between;">
-                <div>
+            <div style="background:#f8fafc; padding:16px; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:16px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div style="flex:1; min-width:200px;">
                     <div style="font-size:11px; color:#64748b; text-transform:uppercase; font-weight:700;">Reference Challan</div>
                     <div style="font-size:16px; font-weight:600; color:#0ea5e9;">${first.purchase_details ? first.purchase_details.challan_no : 'N/A'}</div>
                     <div style="font-size:12px; color:#64748b; margin-top:4px; font-family:monospace;">Batch: ${batch}</div>
                 </div>
-                <div style="text-align:right;">
+                <div style="text-align:right; flex:1; min-width:200px;">
                     <div style="font-size:11px; color:#64748b; text-transform:uppercase; font-weight:700;">Transaction Type</div>
                     <div style="font-weight:600; font-size:14px; color:${first.transaction_type == 1 ? '#059669' : '#ea580c'}">${first.transaction_type == 1 ? 'INWARD (Purchase)' : 'OUTWARD (Transfer)'}</div>
                     <div style="font-size:12px; color:#64748b; margin-top:4px;">${date}</div>
@@ -128,7 +123,8 @@
             </div>
 
             <div style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Included Items (${group.length})</div>
-            <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; margin-bottom:20px;">
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:20px;">
+            <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; white-space:nowrap;">
                 <thead style="background:#f1f5f9;">
                     <tr>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">#</th>
@@ -142,8 +138,9 @@
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
+            </div>
 
-            <div style="background:#f1f5f9; padding:16px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="background:#f1f5f9; padding:16px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                 <div style="font-size:13px; font-weight:600; color:#475569;">Total Ledger Value Computed</div>
                 <div style="font-size:20px; font-weight:700; color:#0f172a;">₹${totalChallanValue.toFixed(2)}</div>
             </div>

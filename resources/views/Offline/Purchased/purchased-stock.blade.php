@@ -2,8 +2,7 @@
 @section('title', 'Godown Stock - Shoe ERP')
 @section('content')
 
-<div class="main-content">
-    <div class="workspace">
+
         <div class="kpi-grid">
             <div class="kpi-card" style="border-top-color: #0ea5e9;">
                 <div class="kpi-title">Total Unique Products</div>
@@ -59,6 +58,4 @@
                 </table>
             </div>
         </div>
-    </div>
-</div>
 @endsection
