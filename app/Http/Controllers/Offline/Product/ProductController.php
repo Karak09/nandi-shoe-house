@@ -13,36 +13,39 @@ use App\Models\Product\Product;
 use App\Models\Product\ProductImage;
 use App\Models\Category\Category;
 use App\Models\Unit\Unit;
+use App\Models\Colour\Colour;
 
 class ProductController extends CommonController
 {
     public function index()
     {
-        $products = Product::with(['category.parent', 'uomRelation', 'images'])
+        $products = Product::with(['category.parent', 'uomRelation', 'images', 'colourRelation'])
             ->where('is_deleted', false)
             ->orderBy('id', 'desc')
             ->get();
             
         $categories = Category::with('parent')->where('is_active', true)->where('is_deleted', false)->get();
         $units = Unit::where('is_active', true)->where('is_deleted', false)->get();
+        $colours = Colour::where('is_active', true)->where('is_deleted', false)->get();
 
         $products->map(function ($p) {
             $p->encrypted_id = Crypt::encryptString($p->id);
             return $p;
         });
 
-        return view('Offline.Product.product', compact('products', 'categories', 'units'));
+        return view('Offline.Product.product', compact('products', 'categories', 'units', 'colours'));
     }
 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'         => 'required|string|max:150|unique:product_masters,name,NULL,id,is_deleted,0',
+            'name'         => 'required|string|max:150',
             'product_code' => 'required|string|max:150|unique:product_masters,product_code,NULL,id,is_deleted,0',
             'sku'          => 'nullable|string|max:50|unique:product_masters,sku,NULL,id,is_deleted,0',
             'hsn_code'     => 'nullable|string|max:120|unique:product_masters,hsn_code,NULL,id,is_deleted,0',
             'cat_id'       => 'required|integer',
             'pro_size'     => 'required|numeric|min:0',
+            'colour_id'    => 'required|integer',
             'uom'          => 'required|integer',
         ]);
 
@@ -88,7 +91,7 @@ class ProductController extends CommonController
         // 2. Save to Database
         DB::beginTransaction();
         try {
-            $data = $request->only(['name', 'ben_name', 'product_code', 'product_des', 'sku', 'cat_id', 'uom', 'hsn_code', 'pro_size']);
+            $data = $request->only(['name', 'ben_name', 'product_code', 'product_des', 'sku', 'cat_id', 'uom', 'hsn_code', 'pro_size', 'colour_id']);
             $data['is_active'] = $request->has('is_active') ? $request->is_active : false;
             $data['is_packet'] = $request->has('is_packet') ? $request->is_packet : false;
             $data['is_deleted'] = false;
@@ -116,7 +119,7 @@ class ProductController extends CommonController
         $id = Crypt::decryptString($encrypted_id);
         
         $validator = Validator::make($request->all(), [
-            'name'         => 'required|string|max:150|unique:product_masters,name,' . $id . ',id,is_deleted,0',
+            'name'         => 'required|string|max:150',
             'product_code' => 'required|string|max:150|unique:product_masters,product_code,' . $id . ',id,is_deleted,0',
             'sku'          => 'nullable|string|max:50|unique:product_masters,sku,' . $id . ',id,is_deleted,0',
             'hsn_code'     => 'nullable|string|max:120|unique:product_masters,hsn_code,' . $id . ',id,is_deleted,0',
@@ -162,7 +165,7 @@ class ProductController extends CommonController
         DB::beginTransaction();
         try {
             $product = Product::findOrFail($id);
-            $data = $request->only(['name', 'ben_name', 'product_code', 'product_des', 'sku', 'cat_id', 'uom', 'hsn_code', 'pro_size']);
+            $data = $request->only(['name', 'ben_name', 'product_code', 'product_des', 'sku', 'cat_id', 'uom', 'hsn_code', 'pro_size', 'colour_id']);
             $data['is_active'] = $request->has('is_active') ? $request->is_active : false;
             $data['is_packet'] = $request->has('is_packet') ? $request->is_packet : false;
 

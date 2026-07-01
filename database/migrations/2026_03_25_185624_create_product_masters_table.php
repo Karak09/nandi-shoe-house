@@ -24,6 +24,7 @@ return new class extends Migration
             $table->unsignedBigInteger('uom')->nullable(); // Foreign Key to unit master
             $table->string('hsn_code', 120)->unique()->nullable();
             $table->string('pro_size', 120)->nullable();
+            $table->unsignedBigInteger('colour_id')->nullable();
             
             $table->boolean('is_active')->default(true);
             $table->boolean('is_deleted')->default(false);

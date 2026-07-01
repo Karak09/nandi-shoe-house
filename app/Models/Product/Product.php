@@ -11,6 +11,7 @@ use App\Models\Unit\Unit_Convert;
 use App\Models\PriceMaster\PriceMaster;
 use App\Models\Product\ProductImage;
 use App\Models\StoreStock\StoreStock;
+use App\Models\Colour\Colour;
 
 class Product extends Model {
     protected $table = 'product_masters';
@@ -18,7 +19,7 @@ class Product extends Model {
     protected $fillable = [
         'name', 'ben_name', 'product_code', 'product_des', 
         'sku', 'cat_id', 'is_packet', 'uom', 'hsn_code', 
-        'pro_size', 'is_active', 'is_deleted'
+        'pro_size', 'colour_id', 'is_active', 'is_deleted'
     ];
 
     public function category(): BelongsTo
@@ -53,5 +54,10 @@ class Product extends Model {
 
     public function unit() {
         return $this->belongsTo(Unit_Convert::class, 'uom', 'id');
+    }
+
+    public function colourRelation(): BelongsTo
+    {
+        return $this->belongsTo(Colour::class, 'colour_id');
     }
 }
