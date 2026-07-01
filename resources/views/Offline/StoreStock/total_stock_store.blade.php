@@ -2,10 +2,7 @@
 @section('title', 'Premium Store Stock Dashboard - Shoe ERP')
 @section('content')
 
-<div class="main-content">
-    <div class="workspace">
-
-        <div class="kpi-grid">
+<div class="kpi-grid">
             <div class="kpi-card" style="border-top-color: #0ea5e9;">
                 <div class="kpi-title">Total Unique Products</div>
                 <div class="kpi-value">{{ $totalUnique }}</div>
@@ -103,5 +100,4 @@
             </div>
         </div>
     </div>
-</div>
 @endsection

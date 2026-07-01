@@ -2,16 +2,13 @@
 @section('title', 'Purchase History - Shoe ERP')
 @section('content')
 
-<div class="main-content">
-    <div class="workspace">
-        
         <div class="filter-bar">
             <div class="filter-group">
                 <label>Select Store</label>
                 <select class="store-select" onchange="changeStore(this.value)">
                     <option value="">All Stores</option>
                     @foreach($stores as $store)
-                        <option value="{{ $store->enc_id }}" {{ (isset($enc_store_id) && $enc_store_id == $store->enc_id) ? 'selected' : '' }}>
+                        <option value="{{ $store->enc_id }}" {{ (isset($storeId) && $storeId == $store->id) ? 'selected' : '' }}>
                             {{ $store->store_name }}
                         </option>
                     @endforeach
@@ -61,13 +58,13 @@
                             <td>{{ $c->storeStockDetails->count() }}</td>
                             <td class="num-col">₹ {{ number_format($c->total, 2) }}</td>
                             <td style="text-align:right;">
-                                <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                    <button class="btn-outline" style="padding:6px 10px; font-size:11px; cursor:pointer;" onclick='viewChallan(@json($c))'>👁️ View</button>
+                                <div style="display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap;">
+                                    <button class="btn-outline" style="padding:6px 10px; font-size:11px; cursor:pointer; white-space:nowrap;" onclick='viewChallan(@json($c))'>👁️ View</button>
                                     
-                                    <a href="{{ route('purchase.print', $c->enc_id) }}" target="_blank" class="btn-outline" style="padding:6px 10px; font-size:11px; cursor:pointer; text-decoration:none; color:inherit;">🖨️ Print</a>
+                                    <a href="{{ route('purchase.print', $c->enc_id) }}" target="_blank" class="btn-outline" style="padding:6px 10px; font-size:11px; cursor:pointer; text-decoration:none; color:inherit; white-space:nowrap;">🖨️ Print</a>
                                     
                                     @if($c->total_qty > 0)
-                                        <button class="btn-outline" style="padding:6px 10px; font-size:11px; cursor:pointer;" onclick='printBarcodes(@json($c->storeStockDetails))'>🏷️ Barcode</button>
+                                        <button class="btn-outline" style="padding:6px 10px; font-size:11px; cursor:pointer; white-space:nowrap;" onclick='printBarcodes(@json($c->storeStockDetails))'>🏷️ Barcode</button>
                                     @endif
                                 </div>
                             </td>
@@ -77,11 +74,9 @@
                 </table>
             </div>
         </div>
-    </div>
-</div>
 
-<div id="viewModal" onclick="this.style.display='none'" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding: 16px;">
-    <div class="modal-box" onclick="event.stopPropagation()">
+<div id="viewModal" onclick="this.style.display='none'" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding:12px;">
+    <div class="modal-box" onclick="event.stopPropagation()" style="padding:16px;">
         <h2 style="font-size: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px; display:flex; justify-content:space-between; align-items: center;">
             <span style="margin: 0;">Challan Details</span>
             <button onclick="document.getElementById('viewModal').style.display='none'" style="background:none; border:none; font-size:28px; line-height: 1; cursor:pointer; color:#64748b; padding: 0;">&times;</button>
@@ -102,11 +97,14 @@
     }
 
     function printBarcodes(details) {
-        let barcodeData = details.filter(d => parseFloat(d.quantity) > 0).map(d => ({
+        let barcodeData = details.filter(d => {
+            let qty = d.current_stock_qty !== undefined ? d.current_stock_qty : parseFloat(d.quantity);
+            return qty > 0;
+        }).map(d => ({
             name: d.product ? d.product.name : 'Unknown Product',
             barcode: d.barcode_no,
             mrp: parseFloat(d.mrp).toFixed(2),
-            quantity: Math.floor(d.quantity) 
+            quantity: Math.floor(d.current_stock_qty !== undefined ? d.current_stock_qty : parseFloat(d.quantity))
         }));
 
         if(barcodeData.length > 0) {
@@ -149,7 +147,7 @@
             </div>
             
             <div class="table-responsive">
-                <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; white-space:nowrap;">
                     <thead style="background:#f1f5f9;">
                         <tr>
                             <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">ID</th>

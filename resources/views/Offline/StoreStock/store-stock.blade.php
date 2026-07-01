@@ -2,22 +2,21 @@
 @section('title', 'Godown Bulk Transfer - Shoe ERP')
 @section('content')
 
-<div class="main-content">
-    <header class="topbar">
-        <div class="transfer-route">
-            <span class="route-node">Godown Stock</span>
-            <span class="route-arrow">➔</span>
-            <select class="form-control" id="store_id" style="width: 250px; border-color: #4f46e5; font-weight: 700; padding:8px 12px;">
-                <option value="">-- Select Destination Store --</option>
-                @foreach($stores as $store)
-                    <option value="{{ $store->id }}">{{ $store->store_name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div style="font-size: 13px; font-weight: 600; color: #64748b;">Date: <span style="font-family: monospace; color: #0f172a;">{{ date('d-M-Y') }}</span></div>
-    </header>
+<header class="topbar" style="gap:16px; flex-wrap:wrap;">
+    <div class="transfer-route">
+        <span class="route-node">Godown Stock</span>
+        <span class="route-arrow">➔</span>
+        <select class="form-control" id="store_id" style="width:250px; border-color:#4f46e5; font-weight:700; padding:8px 12px;">
+            <option value="">-- Select Destination Store --</option>
+            @foreach($stores as $store)
+                <option value="{{ $store->id }}">{{ $store->store_name }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div style="font-size:13px; font-weight:600; color:#64748b; white-space:nowrap;">Date: <span style="font-family:monospace; color:#0f172a;">{{ date('d-M-Y') }}</span></div>
+</header>
 
-    <div class="transfer-workspace">
+<div class="transfer-workspace">
         <div class="source-pane">
             <div class="pane-header">
                 <div class="pane-title">
@@ -76,14 +75,13 @@
                 <button type="button" id="btnSubmit" class="btn-submit" onclick="submitManifest()" disabled>Dispatch & Generate Barcodes ➔</button>
             </div>
         </div>
-    </div>
-</div>
+
 
 <div id="printOverlay">
     <div style="font-size:80px; margin-bottom:20px;">🖨️</div>
     <h2 style="margin-bottom:10px; font-size:32px;">Barcodes Generated!</h2>
     <p style="margin-bottom:30px; color:#cbd5e1; font-size:18px;">A new tab has opened with your scannable barcodes.<br>Print them and close the tab when finished.</p>
-    <button onclick="window.location.replace('/offline/dashboard/default')" style="padding:16px 40px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:18px;">Finish & Return to Dashboard</button>
+    <button onclick="window.location.href='/store-purchase-history'" style="padding:16px 40px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:18px;">Finish & Go to Store Purchase History</button>
 </div>
 
 <script> const globalUnits = @json($units); </script>
@@ -97,6 +95,13 @@
         let stock = JSON.parse(el.getAttribute('data-stock'));
         rawStockData[stock.id] = stock;
     });
+
+    window.validateQty = function(input) {
+        input.value = input.value.replace(/[^0-9]/g, '');
+        if (input.value !== '' && parseInt(input.value) === 0) {
+            input.value = '';
+        }
+    };
 
     document.getElementById('stockSearch').addEventListener('input', function(e) {
         const text = e.target.value.toLowerCase();
@@ -215,7 +220,7 @@
                     <div class="primary-box">
                         <div class="form-group">
                             <label class="form-label">Transfer Qty <span style="color:red">*</span></label>
-                            <input type="number" id="input_quantity_${item.product_id}" class="form-control" step="any" value="${item.quantity}" oninput="updateItem(${item.stock_id}, 'quantity', this.value)" placeholder="Enter Qty">
+                            <input type="text" id="input_quantity_${item.product_id}" class="form-control" inputmode="numeric" value="${item.quantity}" oninput="validateQty(this); updateItem(${item.stock_id}, 'quantity', this.value)" placeholder="Enter Qty">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Unit of Measure <span style="color:red">*</span></label>
@@ -322,7 +327,17 @@
             // SHOW FREEZE SCREEN AND OPEN PRINT TAB
             localStorage.setItem('print_barcodes', JSON.stringify(data.barcodes));
             document.getElementById('printOverlay').style.display = 'flex';
-            window.open('/print-barcodes', '_blank');
+            let printWin = window.open('{{ route('store_stock.print_barcodes') }}', '_blank');
+            if (!printWin || printWin.closed) {
+                window.location.href = '/store-purchase-history';
+                return;
+            }
+            let pollTimer = setInterval(function() {
+                if (printWin.closed) {
+                    clearInterval(pollTimer);
+                    window.location.href = '/store-purchase-history';
+                }
+            }, 500);
             
         } catch (error) {
             btn.disabled = false; btn.innerHTML = 'Dispatch & Generate Barcodes ➔';

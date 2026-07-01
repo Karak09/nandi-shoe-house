@@ -2,9 +2,7 @@
 @section('title', 'Product Stock History - Shoe ERP')
 @section('content')
 
-<div class="workspace">
-    
-    <a href="{{ route('store_stock.total', request()->segment(3)) }}" class="btn-back">
+<a href="{{ route('store_stock.total', request()->segment(3)) }}" class="btn-back">
         ← Back to Total Stock
     </a>
 
@@ -102,5 +100,4 @@
             </table>
         </div>
     </div>
-</div>
 @endsection
