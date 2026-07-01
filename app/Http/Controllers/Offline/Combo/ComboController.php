@@ -224,15 +224,9 @@ class ComboController extends CommonController
         // Eager load everything including Bengali names and User Details
         $query = ComboProduct::with(['product', 'store', 'user.details']);
 
-        // 1. Role-based & Encrypted Store Filtering
-        if (!in_array($user->user_type_id, [1, 2])) {
-            $query->where('store_id', $user->store_id);
-        } elseif ($request->filled('store_filter')) {
-            // Decrypt the store ID from the URL filter
-            $decryptedStoreId = $this->decryptData($request->store_filter);
-            if ($decryptedStoreId) {
-                $query->where('store_id', $decryptedStoreId);
-            }
+        // Store Filtering
+        if ($request->filled('store_filter')) {
+            $query->where('store_id', $request->store_filter);
         }
 
         // 2. Date Range Filtering
@@ -248,14 +242,8 @@ class ComboController extends CommonController
             return $item;
         });
 
-        // 4. Prepare Stores for Dropdown (with encrypted IDs)
-        $stores = [];
-        if (in_array($user->user_type_id, [1, 2])) {
-            $stores = StoreMaster::where('is_active', true)->get()->map(function($s) {
-                $s->enc_id = $this->encryptData($s->id);
-                return $s;
-            });
-        }
+        // 4. Prepare Stores for Dropdown
+        $stores = StoreMaster::where('is_active', true)->get();
 
         return view('Offline\Combo\list', compact('combos', 'stores', 'fromDate', 'toDate'));
     }
@@ -302,8 +290,11 @@ class ComboController extends CommonController
             // 1. Get the Combo info
             $combo = ComboProduct::findOrFail($id);
 
-            // 2. Get the CURRENT live stock for this product in THIS store
-            $currentStock = \App\Models\StoreStock\StoreStock::where('store_id', $combo->store_id)
+            // 2. Use logged-in user's store to check current stock for barcode printing
+            $user = Auth::user();
+            $storeId = $user->store_id ?? $combo->store_id;
+
+            $currentStock = \App\Models\StoreStock\StoreStock::where('store_id', $storeId)
                 ->where('product_id', $combo->product_id)
                 ->first();
 
