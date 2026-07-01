@@ -120,7 +120,7 @@ class StoreMasterController extends CommonController
         $id = Crypt::decryptString($encrypted_id);
         
         $rules = [
-            'user_id' => 'required|integer|unique:store_masters,user_id,NULL,id,is_deleted,0',
+            'user_id' => 'required|integer|unique:store_masters,user_id,' . $id . ',id,is_deleted,0',
             'store_name'  => 'required|string|max:120',
             'contact_no'  => 'required|digits:10|unique:store_masters,contact_no,' . $id . ',id,is_deleted,0',
             'email'       => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com)$/i', 'unique:store_masters,email,' . $id . ',id,is_deleted,0'],
