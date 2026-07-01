@@ -23,12 +23,20 @@ class PriceController extends CommonController
         // Get active products for the dropdown
         $products = Product::with('uomRelation')->where('is_active', true)->where('is_deleted', false)->get();
 
+        // Track which products already have a price configured
+        $existingPriceProductIds = PriceMaster::where('is_deleted', false)
+            ->pluck('product_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
         $prices->map(function ($p) {
             $p->encrypted_id = Crypt::encryptString($p->id);
             return $p;
         });
 
-        return view('Offline.Price.price', compact('prices', 'products'));
+        return view('Offline.Price.price', compact('prices', 'products', 'existingPriceProductIds'));
     }
 
     public function store(Request $request)
@@ -39,10 +47,18 @@ class PriceController extends CommonController
             'pro_sale_price' => 'required|numeric|min:0',
             'pro_online'     => 'nullable|numeric|min:0',
             'pro_size'       => 'nullable|numeric|min:0',
-            'pro_unit'       => 'nullable|numeric|min:0',
+            'pro_unit'       => 'nullable|integer|min:1',
         ]);
 
         if ($validator->fails()) return response()->json(['status' => 'error', 'errors' => $validator->errors()], 422);
+
+        // Prevent duplicate pricing for same product
+        if (PriceMaster::where('product_id', $request->product_id)->where('is_deleted', false)->exists()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => ['product_id' => ['This product already has a price configuration. You can edit the existing one.']]
+            ], 422);
+        }
 
         DB::beginTransaction();
         try {
@@ -72,14 +88,22 @@ class PriceController extends CommonController
             'pro_sale_price' => 'required|numeric|min:0',
             'pro_online'     => 'nullable|numeric|min:0',
             'pro_size'       => 'nullable|numeric|min:0',
-            'pro_unit'       => 'nullable|numeric|min:0',
+            'pro_unit'       => 'nullable|integer|min:1',
         ]);
 
         if ($validator->fails()) return response()->json(['status' => 'error', 'errors' => $validator->errors()], 422);
 
+        // Prevent duplicate pricing — exclude current record
+        if (PriceMaster::where('product_id', $request->product_id)->where('id', '!=', $id)->where('is_deleted', false)->exists()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => ['product_id' => ['This product already has a price configuration by another record.']]
+            ], 422);
+        }
+
         DB::beginTransaction();
         try {
-            $price = Price::findOrFail($id);
+            $price = PriceMaster::findOrFail($id);
             $data = $request->except(['is_active']);
             $data['is_active'] = $request->has('is_active') ? $request->is_active : false;
             $data['gst_rate'] = floatval($request->cgst_rate ?? 0) + floatval($request->sgst_rate ?? 0);
@@ -97,7 +121,7 @@ class PriceController extends CommonController
     {
         try {
             $id = Crypt::decryptString($encrypted_id);
-            Price::findOrFail($id)->update(['is_deleted' => true, 'is_active' => false]);
+            PriceMaster::findOrFail($id)->update(['is_deleted' => true, 'is_active' => false]);
             return response()->json(['status' => 'success', 'message' => 'Price deleted.']);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Deletion failed.'], 500);
