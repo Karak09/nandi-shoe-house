@@ -3,194 +3,289 @@
 @section('page_title', 'Online Platform Management')
 
 @section('content')
-<div style="display: flex; gap: 24px; height: calc(100vh - 140px); align-items: flex-start;">
+<style>
+    .online-shop-layout { display: flex; gap: 24px; height: calc(100vh - 140px); }
+
+    .online-shop-layout .form-section { flex: 0 0 450px; display: flex; flex-direction: column; }
+    .online-shop-layout .form-section .v-card-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .online-shop-layout .form-section .v-card-body::-webkit-scrollbar { width: 5px; }
+    .online-shop-layout .form-section .v-card-body::-webkit-scrollbar-track { background: transparent; }
+    .online-shop-layout .form-section .v-card-body::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 8px; }
+
+    .online-shop-layout .table-section { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .online-shop-layout .table-section .v-card-body { flex: 1; overflow: hidden; padding: 0; display: flex; flex-direction: column; }
+    .online-shop-layout .table-section .v-table-wrap { flex: 1; overflow-y: auto; overflow-x: auto; }
+    .online-shop-layout .table-section .v-table-wrap::-webkit-scrollbar { width: 5px; height: 5px; }
+    .online-shop-layout .table-section .v-table-wrap::-webkit-scrollbar-track { background: transparent; }
+    .online-shop-layout .table-section .v-table-wrap::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 8px; }
+
+    .online-shop-layout .v-fg { margin-bottom: 18px; }
+    .online-shop-layout .v-fg label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; letter-spacing: 0.2px; }
+    .online-shop-layout .v-fg label .required { color: #ef4444; }
+    .online-shop-layout .v-fg .v-input,
+    .online-shop-layout .v-fg .v-select { width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 13px; color: #0f172a; outline: none; transition: all 0.25s ease; background: #fafbfc; }
+    .online-shop-layout .v-fg .v-input:focus,
+    .online-shop-layout .v-fg .v-select:focus { border-color: #2563eb; background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+    .online-shop-layout .v-fg .v-input:hover,
+    .online-shop-layout .v-fg .v-select:hover { border-color: #94a3b8; background: #fff; }
+
+    .online-shop-layout .v-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .online-shop-layout .v-divider { margin: 22px 0 18px 0; border: 0; border-top: 1px solid #e8ecf1; }
+    .online-shop-layout .v-divider-label { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; padding-top: 4px; }
+    .online-shop-layout .v-divider-label .dash { flex: 1; height: 1px; background: linear-gradient(90deg, #e8ecf1, transparent); }
+
+    .online-shop-layout .v-area-section { display: none; margin-top: 6px; padding: 16px; background: #f8fafc; border: 1.5px dashed #d1d5db; border-radius: 12px; }
+    .online-shop-layout .v-area-options { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px; }
+    .online-shop-layout .v-area-options label { font-size: 13px; font-weight: 500; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 8px; border: 1.5px solid #e2e8f0; transition: all 0.2s; background: #fff; }
+    .online-shop-layout .v-area-options label:hover { border-color: #2563eb; background: #eff6ff; }
+    .online-shop-layout .v-area-options input[type="radio"] { accent-color: #2563eb; width: 16px; height: 16px; }
+
+    .online-shop-layout .v-geo-section { display: none; margin-top: 12px; padding: 16px; background: #fff; border: 1px solid #e8ecf1; border-radius: 12px; }
+
+    .online-shop-layout .v-toggle-wrap { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e8ecf1; }
+    .online-shop-layout .v-toggle { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+    .online-shop-layout .v-toggle input { opacity: 0; width: 0; height: 0; }
+    .online-shop-layout .v-toggle .v-slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; transition: 0.3s; border-radius: 34px; }
+    .online-shop-layout .v-toggle .v-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; transition: 0.3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .online-shop-layout .v-toggle input:checked + .v-slider { background: linear-gradient(135deg, #10b981, #059669); }
+    .online-shop-layout .v-toggle input:checked + .v-slider:before { transform: translateX(20px); }
+    .online-shop-layout .v-toggle-label { font-size: 13px; font-weight: 600; color: #1e293b; }
+
+    .online-shop-layout .v-submit { width: 100%; padding: 12px 24px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(37,99,235,0.25); letter-spacing: 0.2px; }
+    .online-shop-layout .v-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37,99,235,0.35); }
+    .online-shop-layout .v-submit:active { transform: translateY(0); }
+    .online-shop-layout .v-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .online-shop-layout .v-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; min-width: 650px; }
+    .online-shop-layout .v-table thead { position: sticky; top: 0; z-index: 2; }
+    .online-shop-layout .v-table thead tr { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
+    .online-shop-layout .v-table th { padding: 14px 20px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; }
+    .online-shop-layout .v-table td { padding: 16px 20px; font-size: 13px; border-bottom: 1px solid #f1f5f9; color: #0f172a; vertical-align: middle; transition: background 0.15s; }
+    .online-shop-layout .v-table tbody tr { transition: all 0.15s; }
+    .online-shop-layout .v-table tbody tr:hover td { background: #f8fafc; }
+    .online-shop-layout .v-td-title { font-weight: 600; color: #0f172a; margin-bottom: 3px; }
+    .online-shop-layout .v-td-sub { font-size: 12px; color: #94a3b8; }
+
+    .online-shop-layout .v-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+    .online-shop-layout .v-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .online-shop-layout .v-badge.active { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .online-shop-layout .v-badge.active .dot { background: #10b981; }
+    .online-shop-layout .v-badge.inactive { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+    .online-shop-layout .v-badge.inactive .dot { background: #94a3b8; }
+
+    .online-shop-layout .v-action { background: none; border: none; cursor: pointer; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+    .online-shop-layout .v-action:hover { transform: translateY(-1px); }
+    .online-shop-layout .v-action-view { color: #059669; }
+    .online-shop-layout .v-action-view:hover { background: #ecfdf5; }
+    .online-shop-layout .v-action-edit { color: #2563eb; }
+    .online-shop-layout .v-action-edit:hover { background: #eff6ff; }
+    .online-shop-layout .v-action-delete { color: #ef4444; }
+    .online-shop-layout .v-action-delete:hover { background: #fef2f2; }
+
+    @media (max-width: 992px) {
+        .online-shop-layout { flex-direction: column !important; height: auto !important; gap: 16px !important; }
+        .online-shop-layout .form-section { flex: none !important; width: 100% !important; }
+        .online-shop-layout .form-section .v-card-body { max-height: 400px !important; }
+        .online-shop-layout .table-section { width: 100% !important; min-height: 300px !important; }
+        .online-shop-layout .v-grid-2 { grid-template-columns: 1fr !important; }
+        .online-shop-layout .v-card-header { flex-wrap: wrap !important; gap: 12px !important; }
+        #viewModal > div { width: 95% !important; max-width: 450px !important; }
+        #viewModalContent > div { grid-template-columns: 1fr !important; }
+        #viewModalContent > div > div { grid-template-columns: 1fr !important; }
+    }
+    @media (max-width: 576px) {
+        .online-shop-layout .v-card-body { padding: 16px !important; }
+        .online-shop-layout .v-area-options { flex-direction: column; gap: 10px; }
+        .online-shop-layout .v-area-options label { width: 100%; }
+        #viewModal > div { padding: 16px !important; }
+        #viewModalContent > div { gap: 8px !important; }
+    }
+</style>
+<div class="online-shop-layout">
     
-    <section class="card form-section" style="flex: 0 0 450px; overflow-y: auto;">
-        <div class="card-header">
-            <span id="formTitle">Register New Platform</span>
-            <button type="button" id="btnClear" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;">Reset</button>
+    <section class="v-card form-section">
+        <div class="v-card-header">
+            <span><span class="v-icon form-icon">🛒</span> <span id="formTitle">Register New Platform</span></span>
+            <button type="button" id="btnClear" class="v-reset">Reset</button>
         </div>
-        <div class="card-body">
+        <div class="v-card-body">
             <form id="shopForm" novalidate>
                 <input type="hidden" id="encrypted_id" name="encrypted_id">
                 
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Platform / Store Name <span style="color:red">*</span></label>
-                    <input type="text" id="store_name" name="store_name" class="form-control" required>
+                <div class="v-fg">
+                    <label>Platform / Store Name <span class="required">*</span></label>
+                    <input type="text" id="store_name" name="store_name" class="v-input" required>
                 </div>
                 
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label class="form-label">Contact No <span style="color:red">*</span></label>
-                        <input type="text" id="contact_no" name="contact_no" class="form-control" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+                <div class="v-grid-2">
+                    <div class="v-fg">
+                        <label>Contact No <span class="required">*</span></label>
+                        <input type="text" id="contact_no" name="contact_no" class="v-input" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Email Address <span style="color:red">*</span></label>
-                        <input type="email" id="email" name="email" class="form-control" placeholder="@gmail.com" required>
+                    <div class="v-fg">
+                        <label>Email Address <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" class="v-input" placeholder="@gmail.com" required>
                     </div>
                 </div>
 
-                <div style="margin: 24px 0 16px 0; border-top: 1px solid var(--border); padding-top: 16px;">
-                    <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Office Geography</label>
-                </div>
+                <hr class="v-divider">
+                <div class="v-divider-label"><span>📍 Office Geography</span><span class="dash"></span></div>
 
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label class="form-label">State <span style="color:red">*</span></label>
-                        <select id="state_id" name="state_id" class="form-control loc-trigger" data-target="district_id" data-url="/api/get-districts/" required>
+                <div class="v-grid-2">
+                    <div class="v-fg">
+                        <label>State <span class="required">*</span></label>
+                        <select id="state_id" name="state_id" class="v-select loc-trigger" data-target="district_id" data-url="/api/get-districts/" required>
                             <option value="">Select State</option>
                             @foreach($states as $state)
                                 <option value="{{ $state->id }}">{{ $state->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">District <span style="color:red">*</span></label>
-                        <select id="district_id" name="district_id" class="form-control" disabled required>
+                    <div class="v-fg">
+                        <label>District <span class="required">*</span></label>
+                        <select id="district_id" name="district_id" class="v-select" disabled required>
                             <option value="">Select District</option>
                         </select>
                     </div>
                 </div>
 
-                <div id="area_type_section" class="form-group" style="display: none; margin-top: 16px; padding: 12px; background: var(--bg-base); border-radius: 6px;">
-                    <label class="form-label">Select Area Type <span style="color:red">*</span></label>
-                    <div style="display: flex; gap: 20px;">
-                        <label style="font-size: 13px; font-weight: 500;"><input type="radio" name="area_type" value="rural" id="type_rural"> Rural (Gram Panchayat)</label>
-                        <label style="font-size: 13px; font-weight: 500;"><input type="radio" name="area_type" value="urban" id="type_urban"> Urban (Municipality)</label>
+                <div id="area_type_section" class="v-area-section">
+                    <label style="font-size:12px;font-weight:600;color:#475569;">Select Area Type <span class="required">*</span></label>
+                    <div class="v-area-options">
+                        <label><input type="radio" name="area_type" value="rural" id="type_rural"> <span>🏘️ Rural (Gram Panchayat)</span></label>
+                        <label><input type="radio" name="area_type" value="urban" id="type_urban"> <span>🏙️ Urban (Municipality)</span></label>
                     </div>
                 </div>
 
-                <div id="rural_section" style="display: none; margin-top: 16px;">
-                    <div class="grid-2" style="margin-bottom: 16px;">
-                        <div class="form-group">
-                            <label class="form-label">Block <span style="color:red">*</span></label>
-                            <select id="block_id" name="block_id" class="form-control loc-trigger" data-target="gp_id" data-url="/api/get-gram-panchayats/">
+                <div id="rural_section" class="v-geo-section">
+                    <div class="v-grid-2">
+                        <div class="v-fg">
+                            <label>Block <span class="required">*</span></label>
+                            <select id="block_id" name="block_id" class="v-select loc-trigger" data-target="gp_id" data-url="/api/get-gram-panchayats/">
                                 <option value="">Select Block</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Gram Panchayat <span style="color:red">*</span></label>
-                            <select id="gp_id" name="gp_id" class="form-control loc-trigger" data-target="vill_id" data-url="/api/get-villages/">
+                        <div class="v-fg">
+                            <label>Gram Panchayat <span class="required">*</span></label>
+                            <select id="gp_id" name="gp_id" class="v-select loc-trigger" data-target="vill_id" data-url="/api/get-villages/">
                                 <option value="">Select Panchayat</option>
                             </select>
                         </div>
                     </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Village (Optional)</label>
-                            <select id="vill_id" name="vill_id" class="form-control loc-trigger" data-target="post_id" data-url="/api/get-post-offices-by-village/">
+                    <div class="v-grid-2" style="margin-top:14px;">
+                        <div class="v-fg">
+                            <label>Village <span style="color:#94a3b8;font-weight:400;">(Optional)</span></label>
+                            <select id="vill_id" name="vill_id" class="v-select loc-trigger" data-target="post_id" data-url="/api/get-post-offices-by-village/">
                                 <option value="">Select Village</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Post Office (Optional)</label>
-                            <select id="post_id" name="post_id" class="form-control" disabled>
+                        <div class="v-fg">
+                            <label>Post Office <span style="color:#94a3b8;font-weight:400;">(Optional)</span></label>
+                            <select id="post_id" name="post_id" class="v-select" disabled>
                                 <option value="">Select Post Office</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <div id="urban_section" style="display: none; margin-top: 16px;">
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Municipality / Corp <span style="color:red">*</span></label>
-                            <select id="muni_id" name="muni_id" class="form-control loc-trigger" data-target="ward_id" data-url="/api/get-wards/">
+                <div id="urban_section" class="v-geo-section">
+                    <div class="v-grid-2">
+                        <div class="v-fg">
+                            <label>Municipality / Corp <span class="required">*</span></label>
+                            <select id="muni_id" name="muni_id" class="v-select loc-trigger" data-target="ward_id" data-url="/api/get-wards/">
                                 <option value="">Select Municipality</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Ward <span style="color:red">*</span></label>
-                            <select id="ward_id" name="ward_id" class="form-control" disabled>
+                        <div class="v-fg">
+                            <label>Ward <span class="required">*</span></label>
+                            <select id="ward_id" name="ward_id" class="v-select" disabled>
                                 <option value="">Select Ward</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <div style="margin: 24px 0 16px 0; border-top: 1px solid var(--border); padding-top: 16px;">
-                    <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Address Details</label>
+                <hr class="v-divider">
+                <div class="v-divider-label"><span>📍 Address Details</span><span class="dash"></span></div>
+
+                <div class="v-grid-2">
+                    <div class="v-fg">
+                        <label>Flat/Office No <span class="required">*</span></label>
+                        <input type="text" id="flat_no" name="flat_no" class="v-input" required>
+                    </div>
+                    <div class="v-fg">
+                        <label>PIN Code <span class="required">*</span></label>
+                        <input type="text" id="pin" name="pin" class="v-input" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+                    </div>
+                    <div class="v-fg" style="grid-column:1/-1;">
+                        <label>Complete Address <span class="required">*</span></label>
+                        <textarea id="address" name="address" class="v-input" rows="3" required></textarea>
+                    </div>
                 </div>
 
-                <div class="grid-2" style="margin-top: 16px;">
-                    <div class="form-group">
-                        <label class="form-label">Flat/Office No <span style="color:red">*</span></label>
-                        <input type="text" id="flat_no" name="flat_no" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">PIN Code <span style="color:red">*</span></label>
-                        <input type="text" id="pin" name="pin" class="form-control" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
-                    </div>
-                    <div class="form-group col-span-full">
-                        <label class="form-label">Complete Address <span style="color:red">*</span></label>
-                        <textarea id="address" name="address" class="form-control" required></textarea>
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-top: 16px;">
-                    <label class="form-label">Status</label>
-                    <div class="toggle-wrapper">
-                        <label class="toggle-switch">
+                <div class="v-fg">
+                    <label>Status</label>
+                    <div class="v-toggle-wrap">
+                        <label class="v-toggle">
                             <input type="checkbox" id="is_active" name="is_active" checked>
-                            <span class="slider"></span>
+                            <span class="v-slider"></span>
                         </label>
-                        <span class="toggle-label" style="font-size: 13px; font-weight: 600;">Active Platform</span>
+                        <span class="v-toggle-label">Active Platform</span>
                     </div>
                 </div>
 
-                <div class="action-footer" style="margin-top: 24px; display: flex; justify-content: flex-end;">
-                    <button type="submit" id="btnSubmit" class="btn btn-primary" style="padding: 10px 24px;">Save Platform Details</button>
+                <div style="margin-top:24px;padding-top:20px;border-top:1px solid #e8ecf1;">
+                    <button type="submit" id="btnSubmit" class="v-submit">Save Platform Details</button>
                 </div>
             </form>
         </div>
     </section>
 
-    <section class="card table-section">
-        <div class="card-header">
-            <span>Platform Directory</span>
-            <input type="text" id="searchInput" class="search-input" onkeyup="tableSearch('searchInput', 'dataTable')" placeholder="Search anything...">
+    <section class="v-card table-section">
+        <div class="v-card-header">
+            <span><span class="v-icon table-icon">📋</span> Platform Directory</span>
         </div>
-        <div style="overflow-y: auto; height: 100%;">
-            <table id="dataTable" style="width: 100%; border-collapse: collapse; text-align: left;" class="datatable">
-                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 1;">
-                    <tr>
-                        <th style="padding: 12px 20px; font-size: 11px;">ID</th>
-                        <th style="padding: 12px 20px; font-size: 11px;">Platform Info</th>
-                        <th style="padding: 12px 20px; font-size: 11px;">Contact</th>
-                        <th style="padding: 12px 20px; font-size: 11px;">Status</th>
-                        <th style="padding: 12px 20px; font-size: 11px; text-align: right;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($shops as $s)
-                    <tr style="border-bottom: 1px solid var(--border-light);">
-                        <td style="padding: 16px 20px;">
-                            <div class="td-title">{{ $loop->iteration }}</div>
-                        </td>
-                        <td style="padding: 16px 20px;">
-                            <div class="td-title">{{ $s->store_name }}</div>
-                            <div class="td-subtitle">{{ $s->flat_no }}, {{ $s->pin }}</div>
-                        </td>
-                        <td style="padding: 16px 20px;">
-                            <div class="td-title">{{ $s->contact_no }}</div>
-                            <div class="td-subtitle">{{ $s->email }}</div>
-                        </td>
-                        <td style="padding: 16px 20px;">
-                            @if($s->is_active)
-                                <span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;">Active</span>
-                            @else
-                                <span style="background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;">Inactive</span>
-                            @endif
-                        </td>
-                        <td style="padding: 16px 20px; text-align: right;">
-                            <button class="action-link" style="color: #059669;" onclick='viewRecord(@json($s))' title="View Details">👁️</button>
-                            <button class="action-link edit-link" onclick='editRecord(@json($s))'>Edit</button>
-                            <button class="action-link delete-link" onclick="deleteRecord('{{ $s->encrypted_id }}')">Delete</button>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+        <div class="v-card-body">
+            <div class="v-table-wrap">
+                <table id="dataTable" class="v-table datatable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Platform Info</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th style="text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($shops as $s)
+                        <tr>
+                            <td><span class="v-td-title">{{ $loop->iteration }}</span></td>
+                            <td>
+                                <div class="v-td-title">{{ $s->store_name }}</div>
+                                <div class="v-td-sub">{{ $s->flat_no }}, {{ $s->pin }}</div>
+                            </td>
+                            <td>
+                                <div class="v-td-title">{{ $s->contact_no }}</div>
+                                <div class="v-td-sub">{{ $s->email }}</div>
+                            </td>
+                            <td>
+                                @if($s->is_active)
+                                    <span class="v-badge active"><span class="dot"></span>Active</span>
+                                @else
+                                    <span class="v-badge inactive"><span class="dot"></span>Inactive</span>
+                                @endif
+                            </td>
+                            <td style="text-align:right;">
+                                <button class="v-action v-action-view" onclick='viewRecord(@json($s))' title="View Details">👁️ View</button>
+                                <button class="v-action v-action-edit" onclick='editRecord(@json($s))'>✏️ Edit</button>
+                                <button class="v-action v-action-delete" onclick="deleteRecord('{{ $s->encrypted_id }}')">🗑️ Delete</button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 </div>
@@ -211,15 +306,15 @@
 
 @push('scripts')
 <script>
-    // --- 0. NEW: CLEAR ERRORS HELPER ---
-    // This function wipes away all red borders and error texts.
+    // --- 0. CLEAR ERRORS HELPER ---
     window.clearFormErrors = function() {
         document.querySelectorAll('.custom-error-text').forEach(el => el.remove());
-        document.querySelectorAll('.form-control, select, textarea, input').forEach(el => el.style.borderColor = '');
+        document.querySelectorAll('.v-input, .v-select, select, textarea, input').forEach(el => el.style.borderColor = '');
         
         const areaSection = document.getElementById('area_type_section');
         if (areaSection) {
             areaSection.style.border = 'none';
+            areaSection.style.borderColor = '';
         }
     };
 
@@ -315,16 +410,16 @@
                     if (fieldName === 'area_type') {
                         let container = document.getElementById('area_type_section');
                         if (container) {
-                            container.style.border = '1px solid #ef4444';
+                            container.style.border = '1.5px solid #ef4444';
                             if (!container.querySelector('.custom-error-text')) {
                                 container.insertAdjacentHTML('beforeend', `<div class="custom-error-text" style="color: #ef4444; font-size: 11px; margin-top: 8px; font-weight: 600;">${msg}</div>`);
                             }
                         }
                     } else if (field) {
-                        // Standard Input / Select targeting
                         field.style.borderColor = '#ef4444';
-                        let sibling = field.nextElementSibling;
-                        if (sibling && sibling.classList.contains('custom-error-text')) { sibling.remove(); }
+                        let parent = field.parentElement;
+                        let existing = parent ? parent.querySelector('.custom-error-text') : field.nextElementSibling;
+                        if (existing && existing.classList.contains('custom-error-text')) { existing.remove(); }
                         field.insertAdjacentHTML('afterend', `<div class="custom-error-text" style="color: #ef4444; font-size: 11px; margin-top: 4px; font-weight: 600;">${msg}</div>`);
                     }
                 }

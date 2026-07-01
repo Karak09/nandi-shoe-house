@@ -63,31 +63,63 @@
                 } catch(e) {} 
                 localStorage.removeItem('erp_jwt_token');
                 localStorage.removeItem('erp_user');
-                window.location.href = '/login';
+                sessionStorage.clear();
+                // window.location.href = '/login';
+                window.location.replace('/login');
             });
         }
 
-        // --- 3. AUTO-LOGOUT (15 MIN INACTIVITY) ---
-        let lastActivity = Date.now();
-        const logoutTimeLimit = 15 * 60 * 1000; // 15 mins in milliseconds
+        // --- 4. CATCH BROWSER "BACK" BUTTON TRICK ---
+        window.addEventListener('pageshow', function(event) {
+            // If the page loads from the browser cache, check if the token still exists
+            if (!localStorage.getItem('erp_jwt_token')) {
+                window.location.replace('/login');
+            }
+        });
 
-        // Update timestamp safely without freezing the browser
-        const updateActivity = () => { lastActivity = Date.now(); };
+        // --- 3. AUTO-LOGOUT (10 MIN INACTIVITY) ---
+        let lastActivity = Date.now();
+        const logoutTimeLimit = 10 * 60 * 1000;
+        const warningTime = 9 * 60 * 1000;
+        let warningShown = false;
+
+        const updateActivity = () => {
+            lastActivity = Date.now();
+            warningShown = false;
+        };
         window.addEventListener('mousemove', updateActivity, { passive: true });
-        window.addEventListener('keypress', updateActivity, { passive: true });
+        window.addEventListener('mousedown', updateActivity, { passive: true });
+        window.addEventListener('keydown', updateActivity, { passive: true });
+        window.addEventListener('keyup', updateActivity, { passive: true });
         window.addEventListener('click', updateActivity, { passive: true });
         window.addEventListener('scroll', updateActivity, { passive: true });
+        window.addEventListener('touchstart', updateActivity, { passive: true });
+        window.addEventListener('touchmove', updateActivity, { passive: true });
+        window.addEventListener('focus', updateActivity, { passive: true });
+        window.addEventListener('input', updateActivity, { passive: true });
+        window.addEventListener('change', updateActivity, { passive: true });
 
-        // Check inactivity only once every 30 seconds (Highly Efficient)
         setInterval(() => {
-            if (Date.now() - lastActivity > logoutTimeLimit) {
+            const idleTime = Date.now() - lastActivity;
+
+            if (!warningShown && idleTime > warningTime && idleTime <= logoutTimeLimit) {
+                warningShown = true;
+                toastr.warning('Your session will expire in 1 minute due to inactivity.', 'Session Expiring', {
+                    timeOut: 8000,
+                    closeButton: true,
+                    progressBar: true,
+                    positionClass: 'toast-top-center'
+                });
+            }
+
+            if (idleTime > logoutTimeLimit) {
                 const logoutBtn = document.getElementById('btnLogoutSafe');
-                if(logoutBtn) {
-                    alert("Sorry, your session timed out after a long time of inactivity. Please click on the link below to login again.");
-                    logoutBtn.click();
+                if (logoutBtn) {
+                    toastr.info('Session expired. Logging out...', 'Logged Out');
+                    setTimeout(() => logoutBtn.click(), 1500);
                 }
             }
-        }, 30000);
+        }, 5000);
 
         // --- 4. GLOBAL TABLE SEARCH ---
         window.tableSearch = function(inputId, tableId) {

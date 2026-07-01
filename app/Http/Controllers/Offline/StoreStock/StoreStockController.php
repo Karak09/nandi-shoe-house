@@ -60,7 +60,7 @@ class StoreStockController extends CommonController
             'store_id' => 'required|integer',
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|integer',
-            'products.*.quantity' => 'required|numeric|gt:0',
+            'products.*.quantity' => 'required|integer|gt:0',
             'products.*.uom' => 'required|integer',
             'products.*.unit_price' => 'required|numeric|min:0',
             'products.*.mrp' => 'required|numeric|min:0',
@@ -69,8 +69,14 @@ class StoreStockController extends CommonController
             'products.*.no_of_pack' => 'nullable|integer|min:0',
             'products.*.each_pack_quantity' => 'nullable|numeric|min:0',
         ], [
+            'products.*.product_id.required' => 'Product is required.',
+            'products.*.quantity.required' => 'Quantity is required.',
+            'products.*.quantity.integer' => 'Quantity must be a whole number, no decimals.',
             'products.*.quantity.gt' => 'Quantity must be greater than 0.',
+            'products.*.uom.required' => 'Unit of Measure is required.',
+            'products.*.unit_price.required' => 'Unit Price is required.',
             'products.*.unit_price.min' => 'Unit Price cannot be negative.',
+            'products.*.mrp.required' => 'MRP is required.',
             'products.*.mrp.min' => 'MRP cannot be negative.',
             'products.*.cgst.min' => 'CGST cannot be negative.',
             'products.*.sgst.min' => 'SGST cannot be negative.',
@@ -192,7 +198,8 @@ class StoreStockController extends CommonController
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => 'error', 'message' => 'Transfer failed: ' . $e->getMessage()], 500);
+            \Illuminate\Support\Facades\Log::error('Store transfer failed: ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Transfer failed due to a server error. No data was saved. Please try again.'], 500);
         }
     }
 
@@ -317,7 +324,7 @@ class StoreStockController extends CommonController
 
         $storeId = $request->input('store_id', $stores->first()->id ?? null);
 
-        $query = PurchaseDetails::with(['transactions.product'])
+        $query = PurchaseDetails::with(['transactions.product', 'transactions.uomRelation'])
             ->where('transaction_type', 2) // 2 = OUTWARD Transfer
             ->orderBy('challan_date', 'desc')
             ->orderBy('id', 'desc');
@@ -375,7 +382,8 @@ class StoreStockController extends CommonController
         ->where('transaction_type', 2) 
         ->whereDate('challan_date', '>=', $start_date)
         ->whereDate('challan_date', '<=', $end_date)
-        ->orderBy('challan_date', 'desc');
+        ->orderBy('challan_date', 'desc')
+        ->orderBy('id', 'desc');
 
         // Apply Store Filter
         if ($storeId) {
@@ -392,6 +400,13 @@ class StoreStockController extends CommonController
             $c->enc_id = $this->encryptData((string) $c->id);
             // Calculate total quantity to decide if Barcode button should show
             $c->total_qty = $c->storeStockDetails->sum('quantity');
+            // Attach current store stock quantity for each product so barcodes print only what's in store
+            foreach ($c->storeStockDetails as $detail) {
+                $storeStock = \App\Models\StoreStock\StoreStock::where('store_id', $detail->store_id)
+                    ->where('product_id', $detail->product_id)
+                    ->first();
+                $detail->current_stock_qty = $storeStock ? (int) $storeStock->quantity : 0;
+            }
             return $c;
         });
 
