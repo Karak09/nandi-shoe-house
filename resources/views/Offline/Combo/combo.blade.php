@@ -177,7 +177,12 @@
                 <select name="combo_product_id" id="combo_product_id" class="form-control" style="font-weight: 600;" disabled>
                     <option value="">-- Choose Target --</option>
                     @foreach($all_products as $prod)
-                        <option value="{{ $prod->id }}">{{ $prod->name }}</option>
+                        @php
+                            $colour = $prod->colourRelation->colour_name ?? '';
+                            $size = $prod->pro_size ?? '';
+                            $attrs = collect([$colour, $size])->filter()->implode(' | ');
+                        @endphp
+                        <option value="{{ $prod->id }}">{{ $prod->name }} {{ $attrs ? '(' . $attrs . ')' : '' }}</option>
                     @endforeach
                 </select>
             </div>
@@ -203,7 +208,7 @@
                         <input type="text" name="unit_price" class="form-control int-only" disabled>
                     </div>
                     <div>
-                        <label class="section-label">GST %: <span style="color:red">*</span></label>
+                        <label class="section-label">GST %</label>
                         <input type="text" name="gst_rate" class="form-control int-only" disabled>
                     </div>
                 </div>
@@ -224,6 +229,7 @@
     <div class="ingredient-row">
         <div class="item-info">
             <div class="item-name-text"></div>
+            <div class="item-attrs" style="display:flex; gap:4px; flex-wrap:wrap; margin-top:2px;"></div>
             <div class="item-stock-text"></div>
             <input type="hidden" class="hidden-id">
             <input type="hidden" class="hidden-uom">
@@ -269,8 +275,11 @@
             let html = '<option value="">Search products in this store...</option>';
             products.forEach(item => {
                 const uomName = item.uom_relation ? item.uom_relation.name : 'Units';
-                html += `<option value="${item.product_id}" data-name="${item.product?.name}" data-uom="${uomName}" data-uom-id="${item.uom}" data-stock="${item.quantity}">
-                            ${item.product?.name} (Available: ${item.quantity} ${uomName})
+                const colour = item.product?.colour_relation?.colour_name || '';
+                const size = item.product?.pro_size || '';
+                const attrs = [colour, size].filter(Boolean).join(' | ');
+                html += `<option value="${item.product_id}" data-name="${item.product?.name}" data-uom="${uomName}" data-uom-id="${item.uom}" data-stock="${item.quantity}" data-colour="${colour}" data-size="${size}">
+                            ${item.product?.name} ${attrs ? '(' + attrs + ')' : ''} (Available: ${item.quantity} ${uomName})
                          </option>`;
             });
             productSearch.innerHTML = html;
@@ -310,6 +319,14 @@
         row.querySelector('.item-name-text').innerText = opt.dataset.name;
         row.querySelector('.item-stock-text').innerText = `Stock: ${opt.dataset.stock} ${opt.dataset.uom}`;
         row.querySelector('.uom-label-text').innerText = opt.dataset.uom;
+
+        const attrsDiv = row.querySelector('.item-attrs');
+        if (attrsDiv) {
+            let badges = '';
+            if (opt.dataset.colour) badges += `<span style="background:#ede9fe; color:#6d28d9; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${opt.dataset.colour}</span>`;
+            if (opt.dataset.size) badges += `<span style="background:#e0f2fe; color:#0369a1; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${opt.dataset.size}</span>`;
+            attrsDiv.innerHTML = badges;
+        }
         
         row.querySelector('.hidden-id').name = `items[${opt.value}][product_id]`;
         row.querySelector('.hidden-id').value = opt.value;
@@ -394,8 +411,6 @@
         if (!document.getElementById('bundle_uom').value) { toastr.error("select uom"); return; }
         const unitPrice = document.querySelector('[name="unit_price"]').value;
         if (!unitPrice || parseInt(unitPrice) <= 0) { toastr.error("put unit price"); return; }
-        const gstRate = document.querySelector('[name="gst_rate"]').value;
-        if (!gstRate || parseInt(gstRate) <= 0) { toastr.error("put gst"); return; }
         const comboPrice = document.querySelector('[name="combo_price"]').value;
         if (!comboPrice || parseInt(comboPrice) <= 0) { toastr.error("put amount"); return; }
 

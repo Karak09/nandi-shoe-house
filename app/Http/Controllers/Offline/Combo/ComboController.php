@@ -30,7 +30,8 @@ class ComboController extends CommonController
             $stores = StoreMaster::where('id', $user->store_id)->get();
         }
 
-        $all_products = Product::where('is_active', true)
+        $all_products = Product::with(['colourRelation'])
+            ->where('is_active', true)
             ->where('is_deleted', false)
             ->get();
 
@@ -43,7 +44,7 @@ class ComboController extends CommonController
     public function getStoreProducts($storeId)
     {
         try {
-            $products = StoreStock::with(['product', 'uomRelation'])
+            $products = StoreStock::with(['product.colourRelation', 'uomRelation'])
                 ->where('store_id', $storeId)
                 ->where('is_active', 1)
                 ->where('is_deleted', 0)
@@ -222,7 +223,7 @@ class ComboController extends CommonController
         $user = Auth::user();
         
         // Eager load everything including Bengali names and User Details
-        $query = ComboProduct::with(['product', 'store', 'user.details']);
+        $query = ComboProduct::with(['product.colourRelation', 'store', 'user.details']);
 
         // Store Filtering
         if ($request->filled('store_filter')) {
@@ -258,12 +259,12 @@ class ComboController extends CommonController
                 ], 400);
 
             // Fetch Ingredients (Type 3) and Bundle (Type 1)
-            $raw = StoreStockDetails::with(['product', 'uomRelation'])
+            $raw = StoreStockDetails::with(['product.colourRelation', 'uomRelation'])
                 ->where('combo_id', $id)
                 ->where('transaction_type', 3)
                 ->get();
 
-            $finished = StoreStockDetails::with(['product', 'uomRelation'])
+            $finished = StoreStockDetails::with(['product.colourRelation', 'uomRelation'])
                 ->where('combo_id', $id)
                 ->where('transaction_type', 1)
                 ->get();
