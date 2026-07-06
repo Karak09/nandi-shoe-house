@@ -21,6 +21,7 @@
                         <tr>
                             <th style="padding:12px 16px; font-size:11px; text-transform:uppercase; color:#64748b;">ID</th>
                             <th style="padding:12px 16px; font-size:11px; text-transform:uppercase; color:#64748b;">Product Details</th>
+                            <th style="padding:12px 16px; font-size:11px; text-transform:uppercase; color:#64748b;">Size & Colour</th>
                             <th style="padding:12px 16px; font-size:11px; text-transform:uppercase; color:#64748b;">Total Stock</th>
                             <th style="padding:12px 16px; font-size:11px; text-transform:uppercase; color:#64748b;">Status</th>
                             <th style="padding:12px 16px; font-size:11px; text-transform:uppercase; color:#64748b; text-align:right;">Action</th>
@@ -33,6 +34,24 @@
                             <td style="padding:12px 16px;">
                                 <div style="font-weight:600; color:#0f172a;">{{ $s->product->name ?? 'N/A' }}</div>
                                 <div style="font-size:11px; color:#64748b; font-family:monospace;">SKU: {{ $s->product->sku ?? '-' }}</div>
+                            </td>
+                            <td style="padding:12px 16px;">
+                                @php
+                                    $colour = $s->product->colourRelation->colour_name ?? '';
+                                    $size = $s->product->pro_size ?? '';
+                                @endphp
+                                @if($colour || $size)
+                                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                                        @if($colour)
+                                            <span style="background:#ede9fe; color:#6d28d9; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">{{ $colour }}</span>
+                                        @endif
+                                        @if($size)
+                                            <span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">{{ $size }}</span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span style="color:#a1a1aa; font-size:11px;">-</span>
+                                @endif
                             </td>
                             <td style="padding:12px 16px;">
                                 <div style="font-weight:700; font-size:15px; color: {{ $s->quantity > 20 ? '#0f172a' : '#ef4444' }};">

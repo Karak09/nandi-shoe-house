@@ -115,7 +115,7 @@
         <section class="v-card">
             <div class="v-card-header">
                 <span><span class="v-icon form-icon">📦</span> Create New Purchase Entry</span>
-                <button type="submit" id="btnSubmit" class="v-submit" style="width:auto;padding:8px 18px;font-size:12px;">Save Purchase Entry</button>
+                <button type="button" id="btnPreview" class="v-submit" style="width:auto;padding:8px 18px;font-size:12px;" onclick="showPreview()">Preview & Submit</button>
             </div>
             <div class="v-card-body">
 
@@ -147,7 +147,7 @@
                             <thead>
                                 <tr>
                                     <th style="width:32px;text-align:center;">#</th>
-                                    <th style="width:180px;">Product <span class="required">*</span></th>
+                                    <th style="width:220px;">Product <span class="required">*</span></th>
                                     <th style="width:72px;">Qty <span class="required">*</span></th>
                                     <th style="width:82px;">UOM <span class="required">*</span></th>
                                     <th style="width:95px;">Price (₹) <span class="required">*</span></th>
@@ -222,6 +222,112 @@
     </form>
 </div>
 
+<div id="previewModal" onclick="if(event.target===this)closePreview()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);">
+    <div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;width:100%;max-width:900px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);animation:previewIn 0.25s ease;">
+        <style>
+            @keyframes previewIn { from { opacity:0; transform:scale(0.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+            .preview-scroll { flex:1; overflow-y:auto; padding:24px; }
+            .preview-scroll::-webkit-scrollbar { width:5px; }
+            .preview-scroll::-webkit-scrollbar-track { background:transparent; }
+            .preview-scroll::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:8px; }
+            .preview-header-row { display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid #e2e8f0; background:linear-gradient(135deg,#f8fafc,#f1f5f9); border-radius:16px 16px 0 0; }
+            .preview-info { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; background:#f8fafc; padding:16px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:20px; }
+            .preview-info-item label { display:block; font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+            .preview-info-item span { font-weight:600; font-size:14px; color:#0f172a; }
+            .preview-table { width:100%; border-collapse:collapse; font-size:12px; text-align:left; min-width:650px; }
+            .preview-table th { background:#f1f5f9; padding:10px 8px; border-bottom:1px solid #cbd5e1; font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; }
+            .preview-table td { padding:10px 8px; border-bottom:1px solid #f1f5f9; color:#0f172a; vertical-align:middle; }
+            .preview-table tfoot td { border-top:2px solid #e2e8f0; font-weight:700; padding:10px 8px; }
+            .preview-imgs { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+            .preview-imgs img { width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0; }
+            .preview-actions { padding:16px 24px; border-top:1px solid #e2e8f0; display:flex; gap:12px; justify-content:flex-end; background:#fafbfc; border-radius:0 0 16px 16px; }
+        </style>
+        <div class="preview-header-row">
+            <h2 style="font-size:17px;font-weight:700;margin:0;display:flex;align-items:center;gap:10px;">
+                <span style="width:30px;height:30px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;">&#128203;</span>
+                Preview Purchase Entry
+            </h2>
+            <button onclick="closePreview()" style="background:none;border:none;font-size:24px;color:#94a3b8;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1;">&times;</button>
+        </div>
+        <div class="preview-scroll">
+            <div class="preview-info">
+                <div class="preview-info-item">
+                    <label>Vendor</label>
+                    <span id="previewVendor">-</span>
+                </div>
+                <div class="preview-info-item">
+                    <label>Challan No</label>
+                    <span id="previewChallanNo" style="color:#0ea5e9;font-family:'JetBrains Mono',monospace;">-</span>
+                </div>
+                <div class="preview-info-item">
+                    <label>Challan Date</label>
+                    <span id="previewChallanDate">-</span>
+                </div>
+            </div>
+
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th style="text-align:center;">Qty</th>
+                            <th style="text-align:center;">UOM</th>
+                            <th style="text-align:right;">Price (₹)</th>
+                            <th style="text-align:right;">MRP (₹)</th>
+                            <th style="text-align:center;">GST %</th>
+                            <th style="text-align:right;">Total (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewItemsBody"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align:left;">
+                                <span id="previewSummaryItems">0 Items</span> |
+                                <span id="previewSummaryQty">0 Qty</span>
+                            </td>
+                            <td colspan="3" style="text-align:right;">Sub Total:</td>
+                            <td id="previewSubTotal" style="text-align:right;">₹ 0.00</td>
+                            <td id="previewGrandTotal" style="text-align:right;color:#059669;font-size:14px;">₹ 0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div style="margin-top:16px;background:#f8fafc;padding:14px;border-radius:8px;border:1px solid #e2e8f0;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Total GST</div>
+                        <div id="previewTotalGst" style="font-weight:700;font-size:14px;color:#dc2626;">₹ 0.00</div>
+                    </div>
+                    <div>
+                        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Total MRP</div>
+                        <div id="previewTotalMrp" style="font-weight:700;font-size:14px;">₹ 0.00</div>
+                    </div>
+                    <div>
+                        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Grand Total</div>
+                        <div id="previewGrandTotal2" style="font-weight:700;font-size:18px;color:#2563eb;">₹ 0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="previewRemarksSection" style="display:none;margin-top:14px;background:#fffbeb;padding:12px 16px;border-radius:8px;border:1px solid #fde68a;">
+                <div style="font-size:10px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Remarks</div>
+                <div id="previewRemarks" style="font-size:13px;color:#92400e;"></div>
+            </div>
+
+            <div id="previewImagesSection" style="display:none;margin-top:14px;">
+                <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Attached Images</div>
+                <div class="preview-imgs" id="previewImages"></div>
+            </div>
+        </div>
+        <div class="preview-actions">
+            <button onclick="closePreview()" style="padding:10px 24px;background:#fff;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;font-weight:600;color:#475569;cursor:pointer;transition:0.2s;">Edit / Modify</button>
+            <button id="btnConfirmSubmit" onclick="confirmSubmit()" style="padding:10px 24px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:0.2s;box-shadow:0 4px 12px rgba(37,99,235,0.25);">Confirm & Submit</button>
+        </div>
+    </div>
+</div>
+
 <div id="imageLightbox" onclick="if(event.target===this)closeLightbox()" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);z-index:10000;align-items:center;justify-content:center;">
     <button onclick="closeLightbox()" style="position:absolute;top:20px;right:40px;background:none;border:none;color:white;font-size:40px;cursor:pointer;font-weight:bold;z-index:10001;">&times;</button>
     <img id="lightboxImg" src="" style="transition:transform 0.3s ease;transform-origin:center center;max-width:90vw;max-height:90vh;cursor:grab;">
@@ -242,15 +348,61 @@
 
     let globalRowId = 0;
 
+    function getProductData(id) {
+        return productsList.find(p => p.id == id) || null;
+    }
+
+    function updateProductDetails(rowId) {
+        const row = document.getElementById(`row_${rowId}`);
+        if (!row) return;
+        const pid = row.querySelector('.prod-select').value;
+        const detailEl = row.querySelector('.product-detail');
+        const pdata = getProductData(pid);
+
+        // Auto-fill UOM
+        const uomSelect = row.querySelector('.uom-select');
+        if (pdata && pdata.uom_id) {
+            const matchingOption = Array.from(uomSelect.options).find(opt => opt.value == pdata.uom_id);
+            if (matchingOption) {
+                uomSelect.value = pdata.uom_id;
+            }
+        } else {
+            uomSelect.value = '';
+        }
+
+        if (detailEl && pdata) {
+            let parts = [];
+            if (pdata.colour_name) parts.push(pdata.colour_name);
+            if (pdata.pro_size) parts.push(pdata.pro_size);
+            const info = parts.length ? parts.join(' | ') : '';
+            const ben = pdata.ben_name ? `<span style="color:#64748b;">${pdata.ben_name}</span>` : '';
+            detailEl.innerHTML = info
+                ? `<span style="font-size:11px;color:#059669;font-weight:600;">${info}</span> ${ben}`
+                : ben;
+            detailEl.style.display = 'block';
+        } else if (detailEl) {
+            detailEl.style.display = 'none';
+        }
+    }
+
     function addRow() {
         const tbody = document.getElementById('gridBody');
         const tr = document.createElement('tr');
         tr.id = `row_${globalRowId}`;
         tr.className = 'item-row';
 
-        let prodHtml = `<select class="prod-select" name="products[${globalRowId}][product_id]" required onchange="checkDuplicateAndCalc(this, ${globalRowId})"><option value="">-- Select Product --</option>`;
-        productsList.forEach(p => prodHtml += `<option value="${p.id}">${p.name}</option>`);
+        let prodHtml = `<select class="prod-select" name="products[${globalRowId}][product_id]" required onchange="checkDuplicateAndCalc(this, ${globalRowId});updateProductDetails(${globalRowId})"><option value="">-- Select Product --</option>`;
+        productsList.forEach(p => {
+            let label = p.name;
+            let extras = [];
+            if (p.colour_name) extras.push(p.colour_name);
+            if (p.pro_size) extras.push(p.pro_size);
+            if (p.uom_name) extras.push(p.uom_name);
+            if (extras.length) label += ` (${extras.join(', ')})`;
+            prodHtml += `<option value="${p.id}">${label}</option>`;
+        });
         prodHtml += `</select>`;
+        prodHtml += `<div class="product-detail" style="display:none;margin-top:4px;font-size:11px;"></div>`;
 
         let uomHtml = `<select class="uom-select" name="products[${globalRowId}][uom]" required><option value="">-- Unit --</option>`;
         unitsList.forEach(u => uomHtml += `<option value="${u.id}">${u.keyword}</option>`);
@@ -384,7 +536,7 @@
         document.getElementById('lightboxImg').style.transform = `scale(${currentZoom})`;
     };
 
-    // --- FORM SUBMIT ---
+    // --- FORM VALIDATION ---
     window.clearFormErrors = function() {
         document.querySelectorAll('.v-error-text, .grid-error-text').forEach(el => el.remove());
         document.querySelectorAll('.img-error-text').forEach(el => el.style.display = 'none');
@@ -392,15 +544,36 @@
         document.querySelectorAll('.upload-box').forEach(el => el.style.borderColor = '#cbd5e1');
     };
 
-    document.getElementById('purchaseForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+    function getProductName(id) {
+        const p = productsList.find(p => p.id == id);
+        return p ? p.name : 'Unknown Product';
+    }
+
+    function getUomName(id) {
+        const u = unitsList.find(u => u.id == id);
+        return u ? (u.keyword || u.name) : 'N/A';
+    }
+
+    window.showPreview = function() {
         window.clearFormErrors();
 
         const rows = document.querySelectorAll('.item-row');
-        if(rows.length === 0) { toastr.error("Please add at least one product."); return; }
+        if(rows.length === 0) { toastr.error('Please add at least one product.'); return; }
 
-        let hasQtyError = false;
+        let hasError = false;
+
         rows.forEach(row => {
+            // Validate product select
+            let prod = row.querySelector('.prod-select');
+            if (!prod.value) {
+                prod.style.borderColor = '#ef4444';
+                if (!prod.nextElementSibling?.classList.contains('v-error-text')) {
+                    prod.insertAdjacentHTML('afterend', '<div class="v-error-text">Please select a product.</div>');
+                }
+                hasError = true;
+            }
+
+            // Validate quantity
             let qty = row.querySelector('.qty-input');
             let val = parseInt(qty.value);
             if (!qty.value || isNaN(val) || val < 1 || qty.value.includes('.')) {
@@ -408,16 +581,157 @@
                 if (!qty.nextElementSibling?.classList.contains('v-error-text')) {
                     qty.insertAdjacentHTML('afterend', '<div class="v-error-text">Must be a positive whole number (min 1).</div>');
                 }
-                hasQtyError = true;
+                hasError = true;
+            }
+
+            // Validate UOM select
+            let uom = row.querySelector('.uom-select');
+            if (!uom.value) {
+                uom.style.borderColor = '#ef4444';
+                if (!uom.nextElementSibling?.classList.contains('v-error-text')) {
+                    uom.insertAdjacentHTML('afterend', '<div class="v-error-text">Please select a UOM.</div>');
+                }
+                hasError = true;
+            }
+
+            // Validate price
+            let price = row.querySelector('.price-input');
+            let pVal = parseFloat(price.value);
+            if (!price.value || isNaN(pVal) || pVal < 0) {
+                price.style.borderColor = '#ef4444';
+                if (!price.nextElementSibling?.classList.contains('v-error-text')) {
+                    price.insertAdjacentHTML('afterend', '<div class="v-error-text">Please enter a valid price.</div>');
+                }
+                hasError = true;
+            }
+
+            // Validate MRP
+            let mrp = row.querySelector('.mrp-input');
+            let mVal = parseFloat(mrp.value);
+            if (!mrp.value || isNaN(mVal) || mVal < 0) {
+                mrp.style.borderColor = '#ef4444';
+                if (!mrp.nextElementSibling?.classList.contains('v-error-text')) {
+                    mrp.insertAdjacentHTML('afterend', '<div class="v-error-text">Please enter a valid MRP.</div>');
+                }
+                hasError = true;
             }
         });
-        if (hasQtyError) { toastr.error('Please fix the quantity errors highlighted.'); return; }
 
-        const btn = document.getElementById('btnSubmit');
+        if (hasError) { toastr.error('Please fix all highlighted errors before proceeding.'); return; }
+
+        const vendorSelect = document.getElementById('vendor_id');
+        if (!vendorSelect.value) { toastr.error('Please select a vendor.'); vendorSelect.style.borderColor = '#ef4444'; return; }
+
+        const challanNo = document.getElementById('challan_no');
+        if (!challanNo.value.trim()) { toastr.error('Please enter challan/invoice number.'); challanNo.style.borderColor = '#ef4444'; return; }
+
+        const challanDate = document.getElementById('challan_date');
+        if (!challanDate.value) { toastr.error('Please select challan date.'); challanDate.style.borderColor = '#ef4444'; return; }
+
+        // Populate header info
+        document.getElementById('previewVendor').textContent = vendorSelect.options[vendorSelect.selectedIndex].text;
+        document.getElementById('previewChallanNo').textContent = challanNo.value.trim();
+        document.getElementById('previewChallanDate').textContent = challanDate.value;
+
+        // Populate items
+        let html = '';
+        let totalQty = 0, subTotal = 0, totalGst = 0, totalMrp = 0, grandTotal = 0;
+
+        rows.forEach((row, idx) => {
+            const pid = row.querySelector('.prod-select').value;
+            const pname = getProductName(pid);
+            const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+            const uomId = row.querySelector('.uom-select').value;
+            const uomName = getUomName(uomId);
+            const price = parseFloat(row.querySelector('.price-input').value) || 0;
+            const mrp = parseFloat(row.querySelector('.mrp-input').value) || 0;
+            const gst = parseFloat(row.querySelector('.gst-input').value) || 0;
+
+            const base = qty * price;
+            const gstAmt = base * (gst / 100);
+            const lineTotal = base + gstAmt;
+
+            totalQty += qty;
+            subTotal += base;
+            totalGst += gstAmt;
+            totalMrp += mrp * qty;
+            grandTotal += lineTotal;
+
+            const pdata = getProductData(pid);
+            let extraInfo = '';
+            let extras = [];
+            if (pdata && pdata.colour_name) extras.push(pdata.colour_name);
+            if (pdata && pdata.pro_size) extras.push(pdata.pro_size);
+            if (extras.length) extraInfo = '<div style="font-size:10px;color:#64748b;font-weight:400;">' + extras.join(' | ') + '</div>';
+
+            html += `<tr>
+                <td style="color:#64748b;">${idx + 1}</td>
+                <td style="font-weight:600;">${pname}${extraInfo}</td>
+                <td style="text-align:center;">${qty}</td>
+                <td style="text-align:center;">${uomName}</td>
+                <td style="text-align:right;">${price.toFixed(2)}</td>
+                <td style="text-align:right;">${mrp.toFixed(2)}</td>
+                <td style="text-align:center;">${gst}%</td>
+                <td style="text-align:right;font-weight:600;">₹ ${lineTotal.toFixed(2)}</td>
+            </tr>`;
+        });
+
+        document.getElementById('previewItemsBody').innerHTML = html;
+        document.getElementById('previewSummaryItems').textContent = rows.length + ' Items';
+        document.getElementById('previewSummaryQty').textContent = totalQty + ' Qty';
+        document.getElementById('previewSubTotal').textContent = '₹ ' + subTotal.toFixed(2);
+        document.getElementById('previewGrandTotal').textContent = '₹ ' + grandTotal.toFixed(2);
+        document.getElementById('previewTotalGst').textContent = '₹ ' + totalGst.toFixed(2);
+        document.getElementById('previewTotalMrp').textContent = '₹ ' + totalMrp.toFixed(2);
+        document.getElementById('previewGrandTotal2').textContent = '₹ ' + grandTotal.toFixed(2);
+
+        // Remarks
+        const remarks = document.getElementById('command').value.trim();
+        const remarksSection = document.getElementById('previewRemarksSection');
+        const remarksEl = document.getElementById('previewRemarks');
+        if (remarks) {
+            remarksSection.style.display = 'block';
+            remarksEl.textContent = remarks;
+        } else {
+            remarksSection.style.display = 'none';
+        }
+
+        // Images
+        const imagesSection = document.getElementById('previewImagesSection');
+        const imagesContainer = document.getElementById('previewImages');
+        let imgHtml = '';
+        const imgSlots = ['fst', 'sec', 'trd', 'foth', 'fiv'];
+        let hasImages = false;
+        imgSlots.forEach(slot => {
+            const base64 = document.getElementById(slot + '_image_base64').value;
+            if (base64) {
+                imgHtml += '<img src="' + base64 + '" onclick="openLightbox(this.src)" style="cursor:zoom-in;">';
+                hasImages = true;
+            }
+        });
+        if (hasImages) {
+            imagesSection.style.display = 'block';
+            imagesContainer.innerHTML = imgHtml;
+        } else {
+            imagesSection.style.display = 'none';
+        }
+
+        document.getElementById('previewModal').style.display = 'flex';
+    };
+
+    window.closePreview = function() {
+        document.getElementById('previewModal').style.display = 'none';
+    };
+
+    window.confirmSubmit = async function() {
+        const btn = document.getElementById('btnConfirmSubmit');
         btn.disabled = true;
-        btn.innerHTML = 'Saving...';
+        btn.innerHTML = 'Submitting...';
 
-        const payload = Object.fromEntries(new FormData(this).entries());
+        const form = document.getElementById('purchaseForm');
+        const rows = document.querySelectorAll('.item-row');
+
+        const payload = Object.fromEntries(new FormData(form).entries());
         payload.products = [];
         rows.forEach(row => {
             payload.products.push({
@@ -441,13 +755,22 @@
                 body: JSON.stringify(payload)
             });
             let data;
-            try { data = await res.json(); } catch (err) { throw new Error("A fatal server error occurred."); }
+            try { data = await res.json(); } catch (err) { throw new Error('A fatal server error occurred.'); }
             if (!res.ok) throw data;
             toastr.success(data.message);
-            setTimeout(() => window.location.reload(), 1000);
+            closePreview();
+            if (data.encrypted_id) {
+                setTimeout(() => {
+                    window.open("{{ url('purchase-history/print') }}/" + data.encrypted_id, '_blank');
+                    window.location.href = "{{ url('purchase-history') }}";
+                }, 1000);
+            } else {
+                setTimeout(() => window.location.reload(), 1000);
+            }
         } catch (error) {
             btn.disabled = false;
-            btn.innerHTML = 'Save Purchase Entry';
+            btn.innerHTML = 'Confirm & Submit';
+            closePreview();
             toastr.error(error.message || 'Validation failed.');
             if (error.errors) {
                 for (let fieldName in error.errors) {
@@ -459,27 +782,27 @@
                         if(box && errDiv) { box.style.borderColor = '#ef4444'; errDiv.innerText = msg; errDiv.style.display = 'block'; }
                     } else if (fieldName.startsWith('products.')) {
                         let parts = fieldName.split('.');
-                        let inputName = `products[${parts[1]}][${parts[2]}]`;
-                        let field = document.querySelector(`[name="${inputName}"]`);
+                        let inputName = 'products[' + parts[1] + '][' + parts[2] + ']';
+                        let field = document.querySelector('[name="' + inputName + '"]');
                         if (field) {
                             field.style.borderColor = '#ef4444';
                             if (!field.nextElementSibling?.classList.contains('v-error-text')) {
-                                field.insertAdjacentHTML('afterend', `<div class="v-error-text">${msg}</div>`);
+                                field.insertAdjacentHTML('afterend', '<div class="v-error-text">' + msg + '</div>');
                             }
                         }
                     } else {
-                        let field = document.querySelector(`[name="${fieldName}"]`);
+                        let field = document.querySelector('[name="' + fieldName + '"]');
                         if (field) {
                             field.style.borderColor = '#ef4444';
                             if (!field.nextElementSibling?.classList.contains('v-error-text')) {
-                                field.insertAdjacentHTML('afterend', `<div class="v-error-text">${msg}</div>`);
+                                field.insertAdjacentHTML('afterend', '<div class="v-error-text">' + msg + '</div>');
                             }
                         }
                     }
                 }
             }
         }
-    });
+    };
 
     addRow();
 </script>

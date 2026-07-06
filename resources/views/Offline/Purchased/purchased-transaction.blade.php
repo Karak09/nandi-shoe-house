@@ -95,11 +95,15 @@
         group.forEach((t, i) => {
             let uom = t.uom_relation ? t.uom_relation.keyword : '';
             let benName = (t.product && t.product.ben_name) ? ` <span style="color:#64748b; font-weight:400; font-size:12px;">(${t.product.ben_name})</span>` : '';
+            let colour = (t.product && t.product.colour_relation) ? t.product.colour_relation.colour_name : '';
+            let size = (t.product && t.product.pro_size) ? t.product.pro_size : '';
             totalChallanValue += parseFloat(t.total_price);
             
             rows += `<tr>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; color:#64748b;">${i+1}</td>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; font-weight:600;">${t.product ? t.product.name : 'N/A'}${benName}</td>
+                <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; font-size:12px;">${size ? `<span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:600;">${size}</span>` : '<span style="color:#a1a1aa;">-</span>'}</td>
+                <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; font-size:12px;">${colour ? `<span style="background:#ede9fe; color:#6d28d9; padding:2px 8px; border-radius:4px; font-weight:600;">${colour}</span>` : '<span style="color:#a1a1aa;">-</span>'}</td>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0; font-weight:600;">${t.quantity} <span style="font-size:11px; color:#64748b; font-weight:400;">${uom}</span></td>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0;">₹${t.mrp}</td>
                 <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0;">₹${t.unit_price}</td>
@@ -129,6 +133,8 @@
                     <tr>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">#</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Product</th>
+                        <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Size</th>
+                        <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Colour</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Qty & UOM</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">MRP (₹)</th>
                         <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1;">Unit price (₹)</th>

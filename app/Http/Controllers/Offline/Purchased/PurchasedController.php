@@ -25,9 +25,21 @@ class PurchasedController extends CommonController
             ->where('is_deleted', false)
             ->get();
 
-        $products = Product::where('is_active', true)
+        $products = Product::with(['colourRelation', 'uomRelation'])
+            ->where('is_active', true)
             ->where('is_deleted', false)
-            ->get();
+            ->get()
+            ->map(function($p) {
+                return [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'ben_name' => $p->ben_name,
+                    'pro_size' => $p->pro_size,
+                    'colour_name' => $p->colourRelation->colour_name ?? '',
+                    'uom_id' => $p->uom,
+                    'uom_name' => $p->uomRelation->keyword ?? $p->uomRelation->name ?? '',
+                ];
+            });
 
         $units = Unit::where('is_active', true)
             ->where('is_deleted', false)
@@ -165,7 +177,12 @@ class PurchasedController extends CommonController
             $challan->update(['total' => $grandTotal]);
 
             DB::commit();
-            return response()->json(['status' => 'success', 'message' => 'Purchase Entry Saved Successfully!']);
+            $encId = $this->encryptData((string) $challan->id);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Purchase Entry Saved Successfully!',
+                'encrypted_id' => $encId,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             foreach ($uploadedData as $data) { Storage::disk('public')->delete($data['doc']); }
@@ -176,7 +193,7 @@ class PurchasedController extends CommonController
     // --- Product Purchase History PAGE ---
     public function history(Request $request)
     {
-        $query = PurchaseDetails::with(['vendor', 'transactions.product', 'transactions.uomRelation'])
+        $query = PurchaseDetails::with(['vendor', 'transactions.product.colourRelation', 'transactions.uomRelation'])
             ->where('transaction_type', 1)
             ->orderBy('challan_date', 'desc')
             ->orderBy('id', 'desc');
@@ -209,7 +226,7 @@ class PurchasedController extends CommonController
         }
 
         // 2. Fetch Transactions from Godown Ledger (PurchaseTransactionDetails)
-        $details = \App\Models\Purchased\PurchaseTransactionDetails::with(['product', 'uomRelation', 'purchaseDetails'])
+        $details = \App\Models\Purchased\PurchaseTransactionDetails::with(['product.colourRelation', 'uomRelation', 'purchaseDetails'])
             ->where('product_id', $product_id)
             ->orderBy('created_at', 'asc') // Ascending to calculate math perfectly
             ->get();
@@ -251,7 +268,7 @@ class PurchasedController extends CommonController
     // --- GODOWN STOCK PAGE ---
     public function stock()
     {
-        $stocks = PurchasedStock::with(['product', 'uomRelation'])
+        $stocks = PurchasedStock::with(['product.colourRelation', 'uomRelation'])
             ->orderBy('quantity', 'desc')
             ->get();
             
@@ -266,7 +283,7 @@ class PurchasedController extends CommonController
     // --- Product Purchase TRANSACTION LEDGER PAGE ---
     public function ledger(Request $request)
     {
-        $query = PurchaseTransactionDetails::with(['purchaseDetails.vendor', 'product', 'uomRelation'])
+        $query = PurchaseTransactionDetails::with(['purchaseDetails.vendor', 'product.colourRelation', 'uomRelation'])
             ->orderBy('id', 'desc');
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -289,7 +306,7 @@ class PurchasedController extends CommonController
         $id = (int) $this->decryptData($encrypted_id);
         if (!$id) abort(404, 'Invalid or expired print link.');
 
-        $challan = PurchaseDetails::with(['vendor', 'transactions.product', 'transactions.uomRelation', 'user.details'])
+        $challan = PurchaseDetails::with(['vendor', 'transactions.product.colourRelation', 'transactions.uomRelation', 'user.details'])
             ->findOrFail($id);
 
         $summary = [

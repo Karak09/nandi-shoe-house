@@ -149,8 +149,18 @@
                             <td class="text-center">{{ $loop->iteration }}</td>
                             <td>
                                 <strong>{{ optional($item->product)->name ?? 'N/A' }}</strong>
-                                @if($item->product && $item->product->ben_name)
-                                    <br><small style="color: #555;">{{ $item->product->ben_name }}</small>
+                                @if($item->product)
+                                    @php
+                                        $attrs = [];
+                                        if ($item->product->colourRelation) $attrs[] = $item->product->colourRelation->colour_name;
+                                        if ($item->product->pro_size) $attrs[] = $item->product->pro_size;
+                                    @endphp
+                                    @if(count($attrs))
+                                        <br><small style="color: #2563eb; font-weight:600;">{{ implode(' | ', $attrs) }}</small>
+                                    @endif
+                                    @if($item->product->ben_name)
+                                        <br><small style="color: #555;">{{ $item->product->ben_name }}</small>
+                                    @endif
                                 @endif
                             </td>
                             <td class="text-center">{{ optional($item->uomRelation)->keyword ?? '' }}</td>
