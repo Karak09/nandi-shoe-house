@@ -19,6 +19,7 @@ use App\Http\Controllers\Offline\StoreStock\StoreStockController;
 use App\Http\Controllers\Offline\Combo\ComboController;
 use App\Http\Controllers\Offline\Sale\StoreSaleController;
 use App\Http\Controllers\Offline\Requisition\RequisitionController;
+use App\Http\Controllers\Offline\Colour\ColourController;
 
 
 /*
@@ -95,6 +96,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/units', [UnitController::class, 'index'])->name('unit.index');
     Route::get('/unit-conversions', [Unit_ConvertController::class, 'index'])->name('unit_convert.index');
     Route::get('/prices', [PriceController::class, 'index'])->name('price.index');
+    Route::get('/colours', [ColourController::class, 'index'])->name('colour.index');
 
     // PURCHASE
     Route::get('/purchases', [PurchasedController::class, 'index'])->name('purchased.index');
@@ -102,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/godown-stock/history/{enc_product_id}', [PurchasedController::class, 'productHistory'])->name('godown_stock.history');
     Route::get('/godown-stock', [PurchasedController::class, 'stock'])->name('purchased.stock');
     Route::get('/transaction-ledger', [PurchasedController::class, 'ledger'])->name('purchased.ledger');
+    Route::get('/purchase-history/print/{enc_id}', [PurchasedController::class, 'printChallan'])->name('purchased.print');
 
     // Store Stock
     // Route::prefix('store-stock')->group(function () {
@@ -209,6 +212,11 @@ Route::prefix('api')->middleware(['jwt.role:1,2'])->group(function () {
 
     // Purchase
     Route::post('/purchases', [PurchasedController::class, 'store']);
+
+    // Colour
+    Route::post('/colours', [ColourController::class, 'store']);
+    Route::put('/colours/{encrypted_id}', [ColourController::class, 'update']);
+    Route::delete('/colours/{encrypted_id}', [ColourController::class, 'destroy']);
 
     // Store Stock
     Route::post('/store-transfers/bulk', [StoreStockController::class, 'store']);

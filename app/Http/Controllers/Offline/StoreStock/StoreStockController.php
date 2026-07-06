@@ -30,7 +30,7 @@ class StoreStockController extends CommonController
             ->where('is_deleted', false)
             ->get();
         
-        $godownStocks = PurchasedStock::with(['product', 'uomRelation'])
+        $godownStocks = PurchasedStock::with(['product.colourRelation', 'uomRelation'])
             ->where('quantity', '>', 0)
             ->get();
 
@@ -49,19 +49,25 @@ class StoreStockController extends CommonController
             $stock->all_batches = count($batches) > 0 ? implode(', ', array_unique($batches)) : 'N/A';
         }
 
+        $godownStocks->map(function ($stock) {
+            $stock->uom_keyword = $stock->uomRelation->keyword ?? '';
+            $stock->colour_name = $stock->product->colourRelation->colour_name ?? '';
+            $stock->pro_size = $stock->product->pro_size ?? '';
+            return $stock;
+        });
+
         return view('Offline.StoreStock.store-stock', compact('stores', 'godownStocks', 'units'));
     }
 
     // --- Transfer Stock to Store PAGE ---
     public function store(Request $request)
     {
-        // Added strict validation for gt:0 (greater than 0) and min:0 (no negatives)
         $validator = Validator::make($request->all(), [
             'store_id' => 'required|integer',
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|integer',
             'products.*.quantity' => 'required|integer|gt:0',
-            'products.*.uom' => 'required|integer',
+            'products.*.uom' => 'nullable|integer',
             'products.*.unit_price' => 'required|numeric|min:0',
             'products.*.mrp' => 'required|numeric|min:0',
             'products.*.cgst' => 'nullable|numeric|min:0',
@@ -73,7 +79,6 @@ class StoreStockController extends CommonController
             'products.*.quantity.required' => 'Quantity is required.',
             'products.*.quantity.integer' => 'Quantity must be a whole number, no decimals.',
             'products.*.quantity.gt' => 'Quantity must be greater than 0.',
-            'products.*.uom.required' => 'Unit of Measure is required.',
             'products.*.unit_price.required' => 'Unit Price is required.',
             'products.*.unit_price.min' => 'Unit Price cannot be negative.',
             'products.*.mrp.required' => 'MRP is required.',
@@ -85,57 +90,79 @@ class StoreStockController extends CommonController
 
         if ($validator->fails()) return response()->json(['status' => 'error', 'errors' => $validator->errors()], 422);
 
+        // PHASE 1: Validate ALL product quantities BEFORE any DB writes
+        $validatedProducts = [];
+        foreach ($request->products as $index => $prod) {
+            $qtyToTransfer = floatval($prod['quantity']);
+
+            $godownStock = PurchasedStock::where('product_id', $prod['product_id'])->first();
+
+            if (!$godownStock || $godownStock->quantity < $qtyToTransfer) {
+                $available = $godownStock ? $godownStock->quantity : 0;
+                return response()->json([
+                    'status' => 'error',
+                    'errors' => ["products.{$index}.quantity" => ["Max available godown stock is {$available}."]]
+                ], 422);
+            }
+
+            $validatedProducts[] = [
+                'product_id'     => $prod['product_id'],
+                'quantity'       => $qtyToTransfer,
+                'uom'            => $prod['uom'] ?? null,
+                'mrp'            => $prod['mrp'],
+                'unit_price'     => $prod['unit_price'],
+                'cgst'           => $prod['cgst'] ?? 0,
+                'sgst'           => $prod['sgst'] ?? 0,
+                'is_packet'      => $prod['is_packet'] ?? false,
+                'no_of_pack'     => $prod['no_of_pack'] ?? 0,
+                'each_pack_quantity' => $prod['each_pack_quantity'] ?? null,
+                'batch_no'       => $prod['batch_no'] ?? '',
+            ];
+        }
+
+        // PHASE 2: All validations passed — now write to DB
         $barcodesToPrint = [];
 
         DB::beginTransaction();
         try {
             $storeId = $request->store_id;
             $datePrefix = date('my');
-            
+
             $todayTransfers = PurchaseDetails::whereDate('created_at', Carbon::today())
                                 ->where('transaction_type', 2)
                                 ->count();
-            
+
             $serial = str_pad($todayTransfers + 1, 3, '0', STR_PAD_LEFT);
             $transferChallanNo = "NSH-{$storeId}-{$datePrefix}-{$serial}";
 
-            // ONE challan created here for all products in the array
             $transferChallan = PurchaseDetails::create([
                 'user_id' => auth()->id() ?? 1,
                 'challan_no' => $transferChallanNo,
                 'challan_date' => Carbon::today(),
-                'transaction_type' => 2, 
+                'transaction_type' => 2,
                 'ip_address' => $request->ip(),
-                'total' => 0 
+                'total' => 0
             ]);
 
             $grandTotalTransfer = 0;
 
-            foreach ($request->products as $index => $prod) {
-                $qtyToTransfer = floatval($prod['quantity']);
-                
+            foreach ($validatedProducts as $prod) {
+                $qtyToTransfer = $prod['quantity'];
+
                 $godownStock = PurchasedStock::with('product')
                     ->where('product_id', $prod['product_id'])
                     ->lockForUpdate()
                     ->first();
-                
-                if (!$godownStock || $godownStock->quantity < $qtyToTransfer) {
-                    return response()->json([
-                        'status' => 'error', 
-                        'errors' => ["products.{$index}.quantity" => ["Max available godown stock is {$godownStock->quantity}."]]
-                    ], 422);
-                }
 
                 $godownStock->quantity -= $qtyToTransfer;
                 $godownStock->save();
 
-                $gstPct = floatval($prod['cgst'] ?? 0) + floatval($prod['sgst'] ?? 0);
+                $gstPct = floatval($prod['cgst']) + floatval($prod['sgst']);
                 $totalPrice = ($qtyToTransfer * $prod['unit_price']) * (1 + ($gstPct / 100));
                 $grandTotalTransfer += $totalPrice;
 
-                // Purchase Ledger (OUT)
                 PurchaseTransactionDetails::create([
-                    'purchase_details_id' => $transferChallan->id, 
+                    'purchase_details_id' => $transferChallan->id,
                     'store_id' => $request->store_id,
                     'product_id' => $prod['product_id'],
                     'quantity' => $qtyToTransfer,
@@ -144,9 +171,9 @@ class StoreStockController extends CommonController
                     'unit_price' => $prod['unit_price'],
                     'total_price' => $totalPrice,
                     'gst' => $gstPct,
-                    'cgst' => $prod['cgst'] ?? 0,
-                    'sgst' => $prod['sgst'] ?? 0,
-                    'is_packet' => $prod['is_packet'] ?? false,
+                    'cgst' => $prod['cgst'],
+                    'sgst' => $prod['sgst'],
+                    'is_packet' => $prod['is_packet'],
                     'transaction_type' => 2,
                 ]);
 
@@ -157,14 +184,13 @@ class StoreStockController extends CommonController
 
                 $barcode = 'BNMN' . time() . mt_rand(100, 999) . $prod['product_id'];
 
-                // Store Details (IN) -> Attached to the SAME $transferChallan->id
                 StoreStockDetails::create([
-                    'purchase_details_id' => $transferChallan->id, 
+                    'purchase_details_id' => $transferChallan->id,
                     'user_id' => auth()->id() ?? 1,
                     'store_id' => $request->store_id,
                     'received_from' => 1,
                     'product_id' => $prod['product_id'],
-                    'quantity' => $qtyToTransfer, 
+                    'quantity' => $qtyToTransfer,
                     'uom' => $prod['uom'],
                     'mrp' => $prod['mrp'],
                     'unit_price' => $prod['unit_price'],
@@ -172,19 +198,19 @@ class StoreStockController extends CommonController
                     'batch_no' => explode(', ', $prod['batch_no']),
                     'barcode_no' => $barcode,
                     'gst' => $gstPct,
-                    'cgst' => $prod['cgst'] ?? 0,
-                    'sgst' => $prod['sgst'] ?? 0,
-                    'no_of_pack' => $prod['no_of_pack'] ?? 0,
-                    'each_pack_quantity' => $prod['each_pack_quantity'] ?? null,
-                    'is_packet' => $prod['is_packet'] ?? false,
-                    'transaction_type' => 1, 
+                    'cgst' => $prod['cgst'],
+                    'sgst' => $prod['sgst'],
+                    'no_of_pack' => $prod['no_of_pack'],
+                    'each_pack_quantity' => $prod['each_pack_quantity'],
+                    'is_packet' => $prod['is_packet'],
+                    'transaction_type' => 1,
                 ]);
 
                 $barcodesToPrint[] = [
                     'name' => $godownStock->product->name,
                     'mrp' => $prod['mrp'],
                     'barcode' => $barcode,
-                    'quantity' => intval($qtyToTransfer) 
+                    'quantity' => intval($qtyToTransfer)
                 ];
             }
 
@@ -192,8 +218,8 @@ class StoreStockController extends CommonController
 
             DB::commit();
             return response()->json([
-                'status' => 'success', 
-                'message' => 'Transfer complete! Generated ' . count($request->products) . ' unique barcodes.',
+                'status' => 'success',
+                'message' => 'Transfer complete! Generated ' . count($validatedProducts) . ' unique barcodes.',
                 'barcodes' => $barcodesToPrint
             ]);
         } catch (\Exception $e) {
@@ -225,7 +251,7 @@ class StoreStockController extends CommonController
             return $store;
         });
 
-        $storeStocks = StoreStock::with(['product', 'uomRelation'])
+        $storeStocks = StoreStock::with(['product.colourRelation', 'uomRelation'])
             ->where('store_id', $storeId)
             ->orderBy('quantity', 'desc')
             ->get();
@@ -260,7 +286,7 @@ class StoreStockController extends CommonController
 
         $store = StoreMaster::find($store_id);
         
-        $details = StoreStockDetails::with(['product', 'uomRelation'])
+        $details = StoreStockDetails::with(['product.colourRelation', 'uomRelation'])
             ->leftJoin('purchase_details', 'store_stock_details.purchase_details_id', '=', 'purchase_details.id')
             ->where('store_stock_details.store_id', $store_id)
             ->where('store_stock_details.product_id', $product_id)
@@ -374,7 +400,7 @@ class StoreStockController extends CommonController
 
         // 4. Build Query
         $query = PurchaseDetails::with([
-            'storeStockDetails.product', 
+            'storeStockDetails.product.colourRelation', 
             'storeStockDetails.uomRelation', 
             'storeStockDetails.store', 
             'user.details'
@@ -458,7 +484,7 @@ class StoreStockController extends CommonController
         }
 
         $challan = PurchaseDetails::with([
-            'storeStockDetails.product', 
+            'storeStockDetails.product.colourRelation', 
             'storeStockDetails.uomRelation', 
             'storeStockDetails.store', 
             'user.details'

@@ -30,7 +30,15 @@
                 @forelse($godownStocks as $stock)
                 <div class="stock-item" id="stock-card-{{ $stock->id }}" data-stock="{{ json_encode($stock) }}">
                     <div>
-                        <div class="s-name">{{ $stock->product->name }} <span style="color:#64748b; font-size:11px;">({{ $stock->uomRelation->keyword ?? '' }})</span></div>
+                        <div class="s-name">{{ $stock->product->name }} <span style="color:#64748b; font-size:11px;">({{ $stock->uom_keyword }})</span></div>
+                        <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:2px;">
+                            @if($stock->colour_name)
+                                <span style="background:#ede9fe; color:#6d28d9; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">{{ $stock->colour_name }}</span>
+                            @endif
+                            @if($stock->pro_size)
+                                <span style="background:#e0f2fe; color:#0369a1; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">{{ $stock->pro_size }}</span>
+                            @endif
+                        </div>
                         <div class="s-meta" style="color:#0ea5e9;">Batches: {{ $stock->all_batches }}</div>
                     </div>
                     <div>
@@ -84,6 +92,20 @@
     <button onclick="window.location.href='/store-purchase-history'" style="padding:16px 40px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:18px;">Finish & Go to Store Purchase History</button>
 </div>
 
+<div id="confirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center; padding:16px;">
+    <div onclick="event.stopPropagation()" style="background:#fff; padding:24px; border-radius:12px; max-width:900px; width:100%; max-height:90vh; display:flex; flex-direction:column;">
+        <h2 style="font-size:20px; font-weight:700; border-bottom:2px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+            <span>Confirm Transfer Details</span>
+            <button onclick="closeConfirmModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#64748b;">&times;</button>
+        </h2>
+        <div id="confirmContent" style="overflow-y:auto; flex-grow:1;"></div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px; padding-top:12px; border-top:1px solid #e2e8f0;">
+            <button onclick="closeConfirmModal()" style="padding:10px 24px; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:6px; font-weight:600; cursor:pointer; font-size:14px;">Edit</button>
+            <button id="btnConfirmSubmit" onclick="confirmSubmit()" style="padding:10px 24px; background:#4f46e5; color:white; border:none; border-radius:6px; font-weight:600; cursor:pointer; font-size:14px;">Confirm & Dispatch</button>
+        </div>
+    </div>
+</div>
+
 <script> const globalUnits = @json($units); </script>
 
 @push('scripts')
@@ -124,9 +146,12 @@
             batch_no: stock.all_batches, // Passing ALL batches
             max_qty: parseFloat(stock.quantity),
             product_name: stock.product.name,
+            product_size: stock.pro_size || '',
+            product_colour: stock.colour_name || '',
             
             quantity: '',
             uom: stock.uomRelation ? stock.uomRelation.id : '',
+            uom_keyword: stock.uom_keyword || '',
             is_packet: '0',
             no_of_pack: '0',
             each_pack_quantity: '',
@@ -189,16 +214,16 @@
 
         let html = '';
         items.forEach(item => {
-            let uomOptions = '<option value="">Select UOM...</option>';
-            globalUnits.forEach(u => {
-                uomOptions += `<option value="${u.id}" ${item.uom == u.id ? 'selected' : ''}>${u.keyword}</option>`;
-            });
 
             html += `
             <div class="m-item expanded" id="manifest-item-${item.stock_id}">
                 <div class="m-header" onclick="toggleAccordion(${item.stock_id})">
                     <div>
                         <div style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">${item.product_name}</div>
+                        <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:2px;">
+                            ${item.product_colour ? `<span style="background:#ede9fe; color:#6d28d9; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${item.product_colour}</span>` : ''}
+                            ${item.product_size ? `<span style="background:#e0f2fe; color:#0369a1; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${item.product_size}</span>` : ''}
+                        </div>
                         <div style="font-size: 12px; color: #0ea5e9; font-family: monospace;">Batches: ${item.batch_no} | Godown Max: ${item.max_qty}</div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 32px;">
@@ -223,8 +248,8 @@
                             <input type="text" id="input_quantity_${item.product_id}" class="form-control" inputmode="numeric" value="${item.quantity}" oninput="validateQty(this); updateItem(${item.stock_id}, 'quantity', this.value)" placeholder="Enter Qty">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Unit of Measure <span style="color:red">*</span></label>
-                            <select id="input_uom_${item.product_id}" class="form-control" onchange="updateItem(${item.stock_id}, 'uom', this.value)">${uomOptions}</select>
+                            <label class="form-label">Unit of Measure</label>
+                            <div style="padding:8px 12px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:6px; font-weight:600; color:#0f172a; font-size:13px;">${item.uom_keyword || 'N/A'}</div>
                         </div>
                     </div>
 
@@ -297,16 +322,95 @@
         document.querySelectorAll('.form-control').forEach(e => { e.style.borderColor = '#cbd5e1'; });
     }
 
-    window.submitManifest = async function() {
+    window.submitManifest = function() {
         clearFormErrors();
         const storeId = document.getElementById('store_id').value;
         if(!storeId) { toastr.error("Please select a Destination Store."); return; }
 
         const items = Object.values(manifestItems);
-        const btn = document.getElementById('btnSubmit');
-        btn.disabled = true; 
-        btn.innerHTML = 'Dispatching Manifest...';
+        const hasEmpty = items.some(item => !item.quantity || !item.unit_price || !item.mrp);
+        if(hasEmpty) { toastr.error("Please fill all required fields (Qty, MRP, Unit Price) for every item."); return; }
 
+        let storeName = '';
+        const storeSelect = document.getElementById('store_id');
+        if(storeSelect.selectedIndex > 0) {
+            storeName = storeSelect.options[storeSelect.selectedIndex].text;
+        }
+
+        let rows = '';
+        let grandTotal = 0;
+        items.forEach((item, i) => {
+            let qty = parseFloat(item.quantity) || 0;
+            let total = item.itemTotal || 0;
+            grandTotal += total;
+            rows += `<tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 8px; font-weight:600;">${i+1}</td>
+                <td style="padding:10px 8px; font-weight:600;">${item.product_name}
+                    <div style="font-size:11px; color:#64748b; margin-top:2px;">
+                        ${item.product_colour ? `<span style="background:#ede9fe; color:#6d28d9; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${item.product_colour}</span>` : ''}
+                        ${item.product_size ? `<span style="background:#e0f2fe; color:#0369a1; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${item.product_size}</span>` : ''}
+                    </div>
+                </td>
+                <td style="padding:10px 8px;">${qty}</td>
+                <td style="padding:10px 8px;">${item.uom_keyword || '-'}</td>
+                <td style="padding:10px 8px;">₹${parseFloat(item.mrp).toFixed(2)}</td>
+                <td style="padding:10px 8px;">₹${parseFloat(item.unit_price).toFixed(2)}</td>
+                <td style="padding:10px 8px;">${item.cgst}% + ${item.sgst}%</td>
+                <td style="padding:10px 8px; font-weight:700;">₹${total.toFixed(2)}</td>
+            </tr>`;
+        });
+
+        const html = `
+            <div style="background:#f8fafc; padding:16px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:16px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <div style="font-size:11px; color:#64748b; text-transform:uppercase; font-weight:700;">Destination Store</div>
+                    <div style="font-size:16px; font-weight:600; color:#4f46e5;">${storeName}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:11px; color:#64748b; text-transform:uppercase; font-weight:700;">Total Items</div>
+                    <div style="font-size:16px; font-weight:600; color:#0f172a;">${items.length}</div>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
+                <thead style="background:#f1f5f9;">
+                    <tr>
+                        <th style="padding:10px 8px; border-bottom:2px solid #cbd5e1;">#</th>
+                        <th style="padding:10px 8px; border-bottom:2px solid #cbd5e1;">Product</th>
+                        <th style="padding:10px 8px; border-bottom:2px solid #cbd5e1;">Qty</th>
+                        <th style="padding:10px 8px; border-bottom:2px solid #cbd5e1;">UOM</th>
+                        <th style="padding:10px 8px; border-bottom:2px solid #cbd5e1;">MRP</th>
+                        <th style="padding:10px 8px; border-bottom:2px solid #cbd5e1;">Unit Price</th>
+                        <th style="padding:10px 8px; border-bottom:2px solid #cbd5e1;">GST</th>
+                        <th style="padding:10px 8px; border-bottom:2px solid #cbd5e1;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                    <tr style="background:#f1f5f9;">
+                        <td colspan="7" style="padding:12px 8px; font-weight:700; text-align:right; border-top:2px solid #cbd5e1;">Grand Total</td>
+                        <td style="padding:12px 8px; font-weight:800; font-size:16px; color:#4f46e5; border-top:2px solid #cbd5e1;">₹${grandTotal.toFixed(2)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            </div>
+        `;
+        document.getElementById('confirmContent').innerHTML = html;
+        document.getElementById('confirmModal').style.display = 'flex';
+    };
+
+    window.closeConfirmModal = function() {
+        document.getElementById('confirmModal').style.display = 'none';
+    };
+
+    window.confirmSubmit = async function() {
+        document.getElementById('confirmModal').style.display = 'none';
+        const btn = document.getElementById('btnConfirmSubmit');
+        btn.disabled = true;
+        btn.innerHTML = 'Dispatching...';
+
+        const storeId = document.getElementById('store_id').value;
+        const items = Object.values(manifestItems);
         const payload = { store_id: storeId, products: items };
 
         try {
@@ -324,7 +428,6 @@
 
             toastr.success(data.message);
             
-            // SHOW FREEZE SCREEN AND OPEN PRINT TAB
             localStorage.setItem('print_barcodes', JSON.stringify(data.barcodes));
             document.getElementById('printOverlay').style.display = 'flex';
             let printWin = window.open('{{ route('store_stock.print_barcodes') }}', '_blank');
@@ -340,16 +443,15 @@
             }, 500);
             
         } catch (error) {
-            btn.disabled = false; btn.innerHTML = 'Dispatch & Generate Barcodes ➔';
+            btn.disabled = false; btn.innerHTML = 'Confirm & Dispatch';
             toastr.error(error.message || 'Transfer validation failed.');
 
             if (error.errors) {
                 for (let fieldName in error.errors) {
                     let msg = error.errors[fieldName][0];
                     
-                    // Route exact error to the specific product ID input box!
                     if(fieldName.startsWith('products.')) {
-                        let parts = fieldName.split('.'); // products.0.quantity
+                        let parts = fieldName.split('.');
                         let index = parseInt(parts[1]);
                         let prodId = items[index].product_id; 
                         let fieldType = parts[2]; 
@@ -358,8 +460,6 @@
                         if(input) {
                             input.style.borderColor = '#ef4444';
                             input.insertAdjacentHTML('afterend', `<div class="error-text">${msg}</div>`);
-                            
-                            // Expand the accordion if it was closed to show the error
                             document.getElementById(`manifest-item-${items[index].stock_id}`).classList.add('expanded');
                         }
                     }

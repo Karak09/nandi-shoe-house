@@ -33,6 +33,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Product Identification</th>
+                                <th>Size & Colour</th>
                                 <th>Available Stock (quantity)</th>
                                 <th>Last Received</th>
                                 <th>Action</th>
@@ -64,6 +65,24 @@
                                             <div class="p-sku">SKU: {{ $stock->product->sku ?? '-' }}</div>
                                         </div>
                                     </div>
+                                </td>
+                                <td>
+                                    @php
+                                        $colour = $stock->product->colourRelation->colour_name ?? '';
+                                        $size = $stock->product->pro_size ?? '';
+                                    @endphp
+                                    @if($colour || $size)
+                                        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                                            @if($colour)
+                                                <span style="background:#ede9fe; color:#6d28d9; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">{{ $colour }}</span>
+                                            @endif
+                                            @if($size)
+                                                <span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">{{ $size }}</span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span style="color:#a1a1aa; font-size:11px;">-</span>
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="qty-wrapper">
