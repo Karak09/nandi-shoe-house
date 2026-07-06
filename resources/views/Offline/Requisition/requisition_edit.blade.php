@@ -9,23 +9,39 @@
         .req-input { width: 80px; text-align: center; font-weight: bold; display: none; }
         .req-text { font-weight: bold; font-size: 15px; }
         .barcode-select { display: none; width: 100%; margin-top: 8px; padding: 6px; border-radius: 4px; border: 1px solid #cbd5e1; }
-        .flex-container { display: flex; align-items: center; gap: 10px; }
+        .flex-container { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         
         @media (max-width: 768px) {
             .row > .col-md-6 { flex: 0 0 100%; max-width: 100%; margin-bottom: 20px; }
             .action-buttons button { width: 100%; margin-bottom: 10px; }
+            .card-body-scroll { max-height: 400px; }
+            .req-input { width: 100% !important; margin-top: 6px; }
+            .req-text { font-size: 14px; }
+            .flex-container { flex-direction: column; align-items: stretch; gap: 4px; }
+            .barcode-select { width: 100%; }
+            .table { font-size: 12px; }
+            .table th, .table td { padding: 8px 6px !important; }
+            .alert { flex-direction: column; gap: 10px; text-align: center; }
+            .alert h4 { margin: 0; }
+        }
+
+        @media (max-width: 480px) {
+            .card-body-scroll { max-height: 300px; }
+            .table th, .table td { padding: 6px 4px !important; font-size: 11px; }
+            .list-unstyled li { font-size: 11px !important; }
         }
     </style>
 
     <div class="container-fluid mt-4">
-        <div class="alert alert-secondary d-flex justify-content-between align-items-center flex-wrap">
+        <div class="alert alert-secondary d-flex justify-content-between align-items-center flex-wrap" style="gap:10px;">
             <div><strong>Req ID:</strong> {{ $requisition->req_id }}</div>
-            <h4>
+            <div>
                 @if($requisition->status == 2) <span class="badge badge-warning">MODIFIED</span> 
                 @elseif($requisition->status == 5) <span class="badge badge-info">REQ. ACCEPTED</span> 
                 @elseif($requisition->status == 4) <span class="badge badge-secondary">NEW</span> 
                 @endif
-            </h4>
+                <strong style="margin-left:12px;">Total: ₹{{ number_format($requisition->total_amount, 2) }}</strong>
+            </div>
         </div>
 
         <div class="row">
@@ -96,22 +112,15 @@
                                             <td class="align-middle">
                                                 <div class="flex-container">
                                                     <span class="req-text">
-
                                                         @if($item->modify_quantity !== null)
-
                                                             {{ $item->modify_quantity }}
-
                                                             <small class="text-muted">
                                                                 (Original: {{ $item->quantity }})
                                                             </small>
-
                                                         @else
-
                                                             {{ $item->quantity }}
-
                                                         @endif
-
-                                                        </span>
+                                                    </span>
                                                     <input type="number" name="items[{{ $item->id }}][modify_quantity]" class="form-control req-input" value="{{ $item->quantity }}" min="0" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                                                 </div>
 
@@ -137,7 +146,7 @@
                                     <textarea name="remarks" id="remarks" class="form-control mb-3" placeholder="Enter remarks..."></textarea>
                                 </div>
                                 
-                                <div class="text-right action-buttons">
+                                <div class="text-right action-buttons" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end;">
                                     {{-- Requester --}}
                                     @if($isRequester)
 
@@ -145,13 +154,15 @@
 
                                             <button type="button"
                                                 class="btn btn-success"
-                                                onclick="processReq('requester_accept')">
+                                                onclick="processReq('requester_accept')"
+                                                style="flex:1; min-width:120px;">
                                                 Accept Modification
                                             </button>
 
                                             <button type="button"
                                                 class="btn btn-danger"
-                                                onclick="prepareAction('requester_reject')">
+                                                onclick="prepareAction('requester_reject')"
+                                                style="flex:1; min-width:120px;">
                                                 Reject Modification
                                             </button>
 
@@ -163,25 +174,28 @@
                                         @if($requisition->status != 5)
 
                                             <button type="button"
-                                                class="btn btn-warning mr-2"
+                                                class="btn btn-warning"
                                                 id="modifyBtn"
-                                                onclick="enableModify()">
+                                                onclick="enableModify()"
+                                                style="flex:1; min-width:100px;">
                                                 Modify
                                             </button>
 
                                         @endif
 
                                         <button type="button"
-                                            class="btn btn-danger mr-2"
+                                            class="btn btn-danger"
                                             id="rejectBtn"
-                                            onclick="prepareAction('reject')">
+                                            onclick="prepareAction('reject')"
+                                            style="flex:1; min-width:100px;">
                                             Reject
                                         </button>
 
                                         <button type="button"
                                             class="btn btn-success"
                                             id="approveBtn"
-                                            onclick="prepareApprove()">
+                                            onclick="prepareApprove()"
+                                            style="flex:1; min-width:100px;">
                                             Approve
                                         </button>
 
@@ -190,7 +204,7 @@
                                     <button type="button"
                                         id="submitModifyBtn"
                                         class="btn btn-warning"
-                                        style="display:none;"
+                                        style="display:none; flex:1; min-width:120px;"
                                         onclick="processReq('modify')">
                                         Submit Modification
                                     </button>
@@ -198,7 +212,7 @@
                                     <button type="button"
                                         id="submitRejectBtn"
                                         class="btn btn-danger"
-                                        style="display:none;"
+                                        style="display:none; flex:1; min-width:120px;"
                                         onclick="processReq('reject')">
                                         Confirm Rejection
                                     </button>
@@ -206,7 +220,7 @@
                                     <button type="button"
                                         id="submitApproveBtn"
                                         class="btn btn-success"
-                                        style="display:none;"
+                                        style="display:none; flex:1; min-width:120px;"
                                         onclick="processReq('approve')">
                                         Confirm Approval
                                     </button>
@@ -227,30 +241,21 @@
 
             function hideButton(id) {
                 let el = document.getElementById(id);
-
-                if (el) {
-                    el.style.display = 'none';
-                }
+                if (el) { el.style.display = 'none'; }
             }
 
             function showButton(id) {
                 let el = document.getElementById(id);
-
-                if (el) {
-                    el.style.display = 'inline-block';
-                }
+                if (el) { el.style.display = 'inline-block'; }
             }
 
             function enableModify() {
-
                 document.querySelectorAll('.req-input').forEach(el => {
                     el.style.display = 'block';
                 });
 
                 let remarks = document.getElementById('remarksContainer');
-                if (remarks) {
-                    remarks.style.display = 'block';
-                }
+                if (remarks) { remarks.style.display = 'block'; }
 
                 hideButton('modifyBtn');
                 hideButton('rejectBtn');
@@ -260,24 +265,15 @@
             }
 
             function prepareAction(action) {
-
                 let remarks = document.getElementById('remarksContainer');
-
-                if (remarks) {
-                    remarks.style.display = 'block';
-                }
+                if (remarks) { remarks.style.display = 'block'; }
 
                 hideButton('modifyBtn');
                 hideButton('rejectBtn');
                 hideButton('approveBtn');
 
-                if (action === 'reject') {
-                    showButton('submitRejectBtn');
-                }
-
-                if (action === 'requester_reject') {
-                    showButton('submitRejectBtn');
-                }
+                if (action === 'reject') { showButton('submitRejectBtn'); }
+                if (action === 'requester_reject') { showButton('submitRejectBtn'); }
             }
 
             function prepareApprove(isGodown) {

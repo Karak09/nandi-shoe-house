@@ -1,275 +1,330 @@
 @extends('Offline.layouts.app')
 @section('title', 'Requisition List')
-@section('page_title', 'Requisition List')
+@push('styles')
+<style>
+    .req-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; }
+    .req-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .req-badge.confirmed { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .req-badge.confirmed .dot { background: #22c55e; }
+    .req-badge.modified { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .req-badge.modified .dot { background: #f59e0b; }
+    .req-badge.rejected { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .req-badge.rejected .dot { background: #ef4444; }
+    .req-badge.accepted { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+    .req-badge.accepted .dot { background: #0ea5e9; }
+    .req-badge.onhold { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .req-badge.onhold .dot { background: #94a3b8; }
+
+    .btn-view-req { padding: 5px 10px; font-size: 11px; cursor: pointer; background: #fff; border: 1px solid #cbd5e1; border-radius: 5px; color: #0f172a; font-weight: 600; transition: 0.2s; }
+    .btn-view-req:hover { background: #f1f5f9; border-color: #94a3b8; }
+    .btn-edit-req { padding: 5px 10px; font-size: 11px; cursor: pointer; background: #2563eb; border: none; border-radius: 5px; color: #fff; font-weight: 600; text-decoration: none; transition: 0.2s; display: inline-block; }
+    .btn-edit-req:hover { background: #1d4ed8; }
+
+    .req-id-text { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0ea5e9; font-size: 13px; }
+    .modal-req { background: #fff; border-radius: 16px; width: 100%; max-width: 1000px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: modalIn 0.25s ease; }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    .modal-req-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 16px 16px 0 0; }
+    .modal-req-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+    .modal-req-body::-webkit-scrollbar { width: 5px; }
+    .modal-req-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-req-body::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 8px; }
+
+    .modal-info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; background: #f8fafc; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .modal-info-item label { display: block; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .modal-info-item span { font-weight: 600; font-size: 14px; color: #0f172a; }
+
+    .datatable td:last-child { white-space: nowrap; }
+    .datatable td:last-child a,
+    .datatable td:last-child button { display: inline-flex; align-items: center; justify-content: center; margin: 2px; vertical-align: middle; }
+
+    .status-filter { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; color: #0f172a; outline: none; background: #f8fafc; cursor: pointer; transition: 0.2s; min-width: 140px; }
+    .status-filter:focus { border-color: #0ea5e9; background: #fff; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1); }
+</style>
+@endpush
 
 @section('content')
 
-    <style>
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .table {
-            width: 100% !important;
-            white-space: nowrap;
-        }
-
-        @media (max-width: 768px) {
-
-            .container-fluid {
-                padding-left: 5px !important;
-                padding-right: 5px !important;
-            }
-
-            .table {
-                font-size: 12px;
-            }
-
-            .btn-sm {
-                padding: 3px 8px;
-                font-size: 11px;
-            }
-
-            .badge {
-                font-size: 10px;
-                padding: 4px 6px;
-            }
-
-            td, th {
-                padding: 6px !important;
-                vertical-align: middle !important;
-            }
-
-            #viewReqModal {
-                padding: 10px !important;
-            }
-
-            #viewReqModal > div {
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 10px !important;
-            }
-        }
-    </style>
-
-    <div class="container-fluid mt-4">
-        <div class="table-responsive w-100">
-            <table class="table table-bordered table-striped datatable">
-                <thead class="bg-dark text-white">
-                    <tr>
-                        <th>ID</th>
-                        <th>Req ID</th>
-                        <th>Who Req</th>
-                        <th>Where Req</th>
-                        <th>Status</th>
-                        <th>Total Items</th>
-                        <th>Total Amount</th>
-                        <th>Date & Time</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($requisitions as $req)
-                    <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td><strong>{{ $req->req_id }}</strong></td>
-                        <td>{{ $req->creator_name }}</td>
-                        <td>{{ $req->where_req_name }}</td>
-                        <td>
-                            @if($req->status == 1) <span class="badge badge-success">Confirmed</span>
-                            @elseif($req->status == 2) <span class="badge badge-warning">Modified</span>
-                            @elseif($req->status == 3) <span class="badge badge-danger">Rejected</span>
-                            @elseif($req->status == 5) <span class="badge badge-info">Req. Accepted</span>
-                            @else <span class="badge badge-secondary">On-Hold</span> @endif
-                        </td>
-                        <td>{{ $req->items->count() }}</td>
-                        <td class="text-primary font-weight-bold">₹ {{ number_format($req->total_amount, 2) }}</td>
-                        <td>{{ $req->created_at->format('d M, Y h:i A') }}</td>
-                        <td>
-                            <button class="btn btn-sm btn-info btn-view shadow-sm" data-req="{{ base64_encode($req->toJson()) }}">View</button>
-
-                            @php
-                                $canEdit = false;
-                                
-                                // 1. Identify roles in this specific transaction
-                                $isRequester = ($req->user_id == Auth::id());
-                                $isDestination = false;
-
-                                if ($req->where_req == 'Store' && $req->req_store_id == $storeId) {
-                                    $isDestination = true; // This store is receiving the request
-                                }
-                                if ($req->where_req == 'Godown' && $role == 6) {
-                                    $isDestination = true; // Role 6 handles requests sent to Godown
-                                }
-
-                                // 2. Apply Edit Logic
-                                if (in_array($role, [1, 2])) {
-                                    $canEdit = true; // SuperAdmin & Admin can always edit
-                                } else {
-                                    if ($isDestination) {
-                                        // Destination (Where Req) ALWAYS sees edit to approve/reject/modify
-                                        $canEdit = true;
-                                    } elseif ($isRequester) {
-                                        // Requester ONLY sees edit if it was Modified (Status 2)
-                                        if ($req->status == 2) {
-                                            $canEdit = true;
-                                        }
-                                    }
-                                }
-                            @endphp
-
-                            @if($canEdit && $req->status != 1 && $req->status != 3)
-                                <a href="{{ route('requisition.edit', $req->encrypted_id) }}" class="btn btn-sm btn-primary shadow-sm ml-1">Edit</a>
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+<form method="GET" action="{{ route('requisition.list') }}" class="filter-bar">
+    <div class="global-date-filter">
+        <div class="filter-group">
+            <label>From Date</label>
+            <input type="date" name="from_date" class="filter-input" value="{{ $fromDate }}">
+        </div>
+        <div class="filter-group">
+            <label>To Date</label>
+            <input type="date" name="to_date" class="filter-input" value="{{ $toDate }}">
+        </div>
+        <div class="filter-group">
+            <label>Status</label>
+            <select name="status" class="status-filter">
+                <option value="">All Status</option>
+                <option value="4" {{ request('status') === '4' ? 'selected' : '' }}>On-Hold</option>
+                <option value="2" {{ request('status') === '2' ? 'selected' : '' }}>Modified</option>
+                <option value="5" {{ request('status') === '5' ? 'selected' : '' }}>Req. Accepted</option>
+                <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Confirmed</option>
+                <option value="3" {{ request('status') === '3' ? 'selected' : '' }}>Rejected</option>
+            </select>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <button type="submit" class="btn-filter">Filter</button>
+            <a href="{{ route('requisition.list') }}" class="btn-reset">Reset</a>
         </div>
     </div>
+    <a href="{{ route('requisition.create') }}" class="btn-filter" style="text-decoration:none; height:36px; display:inline-flex; align-items:center; padding:0 20px;">+ New Requisition</a>
+</form>
 
-    <div id="viewReqModal" onclick="this.style.display='none'" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding:20px;">
-        <div onclick="event.stopPropagation()" style="background:#fff; padding:24px; border-radius:12px; width:900px; max-width:95%; max-height:90vh; overflow-y:auto;">
+<div class="card">
+    <div class="card-header">
+        <span>Requisition List</span>
+        <span class="text-muted" style="font-size:12px;font-weight:400;">{{ $requisitions->count() }} entries</span>
+    </div>
+    <div class="table-container">
+        <table class="datatable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Req ID</th>
+                    <th>Requester</th>
+                    <th>Destination</th>
+                    <th>Status</th>
+                    <th>Items</th>
+                    <th>Total Amount</th>
+                    <th>Date & Time</th>
+                    <th data-sortable="false" style="text-align:right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($requisitions as $req)
+                <tr>
+                    <td style="color:#64748b;">{{ $loop->iteration }}</td>
+                    <td><span class="req-id-text">{{ $req->req_id }}</span></td>
+                    <td>
+                        <div style="font-weight:600; font-size:13px;">{{ $req->creator_name }}</div>
+                        <div style="font-size:11px; color:#64748b;">{{ $req->who_req_name }}</div>
+                    </td>
+                    <td style="font-weight:500;">{{ $req->where_req_name }}</td>
+                    <td>
+                        @if($req->status == 1) <span class="req-badge confirmed"><span class="dot"></span>Confirmed</span>
+                        @elseif($req->status == 2) <span class="req-badge modified"><span class="dot"></span>Modified</span>
+                        @elseif($req->status == 3) <span class="req-badge rejected"><span class="dot"></span>Rejected</span>
+                        @elseif($req->status == 5) <span class="req-badge accepted"><span class="dot"></span>Req. Accepted</span>
+                        @else <span class="req-badge onhold"><span class="dot"></span>On-Hold</span> @endif
+                    </td>
+                    <td class="num-col">{{ $req->items->count() }}</td>
+                    <td class="num-col" style="font-weight:700; color:#059669;">₹{{ number_format($req->total_amount, 2) }}</td>
+                    <td style="font-size:12px; color:#64748b;">{{ $req->created_at->format('d M, Y h:i A') }}</td>
+                    <td style="text-align:right;">
+                        <button class="btn-view-req" onclick='openViewModal(@json($req))'>
+                            <span style="font-size:14px;line-height:1;">&#128065;</span> View
+                        </button>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h4>Requisition Details: <span id="modalReqId" class="text-primary"></span></h4>
-                <button type="button" onclick="document.getElementById('viewReqModal').style.display='none'" class="btn btn-danger btn-sm">X</button>
+                        @php
+                            $canEdit = false;
+                            $isRequester = ($req->user_id == Auth::id());
+                            $isDestination = false;
+
+                            if ($req->where_req == 'Store' && $req->req_store_id == $storeId) {
+                                $isDestination = true;
+                            }
+                            if ($req->where_req == 'Godown' && $role == 6) {
+                                $isDestination = true;
+                            }
+
+                            if (in_array($role, [1, 2])) {
+                                $canEdit = true;
+                            } else {
+                                if ($isDestination) {
+                                    $canEdit = true;
+                                } elseif ($isRequester) {
+                                    if ($req->status == 2) {
+                                        $canEdit = true;
+                                    }
+                                }
+                            }
+                        @endphp
+
+                        @if($canEdit && $req->status != 1 && $req->status != 3)
+                            <a href="{{ route('requisition.edit', $req->encrypted_id) }}" class="btn-edit-req ml-1">
+                                <span style="font-size:14px;line-height:1;">&#9998;</span> Edit
+                            </a>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="9" style="text-align:center; padding:40px; color:#64748b;">No requisitions found.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="viewReqModal" onclick="if(event.target===this)closeViewModal()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.7); z-index:9999; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px);">
+    <div class="modal-req" onclick="event.stopPropagation()">
+        <div class="modal-req-header">
+            <div>
+                <h2 style="font-size:17px; font-weight:700; margin:0; display:flex; align-items:center; gap:10px;">
+                    <span style="width:30px; height:30px; background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:14px;">&#128203;</span>
+                    Requisition: <span id="modalReqId" style="color:#0ea5e9; font-family:'JetBrains Mono',monospace;"></span>
+                </h2>
+            </div>
+            <button onclick="closeViewModal()" style="background:none; border:none; font-size:24px; color:#94a3b8; cursor:pointer; padding:4px 8px; border-radius:6px; line-height:1;">&times;</button>
+        </div>
+        <div class="modal-req-body">
+            <div class="modal-info-grid">
+                <div class="modal-info-item">
+                    <label>Initial Remarks</label>
+                    <span id="modalRemarks" style="color:#64748b; font-weight:400;"></span>
+                </div>
+                <div class="modal-info-item" id="modalRemarks1Container" style="display:none;">
+                    <label>Sender Remarks</label>
+                    <span id="modalRemarks1"></span>
+                </div>
+                <div class="modal-info-item" id="modalRemarks2Container" style="display:none;">
+                    <label>Requester Remarks</label>
+                    <span id="modalRemarks2"></span>
+                </div>
+                <div class="modal-info-item" id="modalRemarks3Container" style="display:none;">
+                    <label>Final Sender Remarks</label>
+                    <span id="modalRemarks3"></span>
+                </div>
             </div>
 
-            <div class="mb-3 alert alert-secondary border">
-                <div><strong>Initial Remarks:</strong> <span id="modalRemarks" class="text-muted"></span></div>
-                <div id="modalRemarks1Container" style="display: none;"><strong>Sender Remarks:</strong> <span id="modalRemarks1" class="text-dark"></span></div>
-                <div id="modalRemarks2Container" style="display: none;"><strong>Requester Remarks:</strong> <span id="modalRemarks2" class="text-dark"></span></div>
-                <div id="modalRemarks3Container" style="display: none;"><strong>Final Sender Remarks:</strong> <span id="modalRemarks3" class="text-dark"></span></div>
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left; min-width:550px;">
+                    <thead style="background:#f1f5f9;">
+                        <tr>
+                            <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1; font-size:10px; color:#64748b; text-transform:uppercase;">ID</th>
+                            <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1; font-size:10px; color:#64748b; text-transform:uppercase;">Product</th>
+                            <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1; font-size:10px; color:#64748b; text-transform:uppercase; text-align:center;">Req. Qty</th>
+                            <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1; font-size:10px; color:#64748b; text-transform:uppercase; text-align:center;">Final Qty</th>
+                            <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1; font-size:10px; color:#64748b; text-transform:uppercase;">UOM</th>
+                            <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1; font-size:10px; color:#64748b; text-transform:uppercase; text-align:right;">Price</th>
+                            <th style="padding:10px 8px; border-bottom:1px solid #cbd5e1; font-size:10px; color:#64748b; text-transform:uppercase; text-align:right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalItemsBody"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" style="padding:12px 8px; text-align:right; font-weight:700; border-top:2px solid #e2e8f0; font-size:13px;">Grand Total:</td>
+                            <td id="modalGrandTotal" style="padding:12px 8px; text-align:right; font-weight:700; color:#059669; border-top:2px solid #e2e8f0; font-size:15px;"></td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
 
-            <table class="table table-bordered table-striped table-sm">
-                <thead class="bg-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Product Name</th>
-                        <th class="text-center">Req. Qty</th>
-                        <th class="text-center">Final Qty</th>
-                        <th>UOM</th>
-                        <th class="text-right">Price</th>
-                        <th class="text-right">Total</th>
-                    </tr>
-                </thead>
-                <tbody id="modalItemsBody"></tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="6" class="text-right font-weight-bold">Grand Total:</td>
-                        <td id="modalGrandTotal" class="text-right font-weight-bold text-success"></td>
-                    </tr>
-                </tfoot>
-            </table>
-
-            <div id="requesterActions" style="display: none; border-top: 1px solid #ccc; padding-top: 15px; margin-top: 15px;">
-                <label class="text-danger font-weight-bold">Remarks (Mandatory if Rejecting)</label>
-                <textarea id="requesterRemarks" class="form-control mb-3" rows="2" placeholder="Enter remarks..."></textarea>
-                <div class="text-right">
-                    <button class="btn btn-danger" onclick="requesterAction('requester_reject')">Reject Changes</button>
-                    <button class="btn btn-success" onclick="requesterAction('requester_accept')">Accept Changes</button>
+            <div id="requesterActions" style="display: none; border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 16px;">
+                <label style="font-size:13px; font-weight:700; color:#dc2626; display:block; margin-bottom:8px;">Remarks (Mandatory if Rejecting)</label>
+                <textarea id="requesterRemarks" style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; outline:none; min-height:60px; resize:vertical;" placeholder="Enter remarks..."></textarea>
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+                    <button class="btn-filter" style="background:#dc2626;" onclick="requesterAction('requester_reject')">Reject Changes</button>
+                    <button class="btn-filter" style="background:#059669;" onclick="requesterAction('requester_accept')">Accept Changes</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    @push('scripts')
-        <script>
-        // BACK BUTTON CACHE BUSTER
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) { window.location.reload(); }
-        });
+@push('scripts')
+<script>
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) { window.location.reload(); }
+    });
 
-        let currentModalEncryptedId = '';
+    let currentModalEncryptedId = '';
 
-        $(document).on('click', '.btn-view', function () {
-            let reqData = $(this).attr('data-req');
-            let req = JSON.parse(atob(reqData));
-            currentModalEncryptedId = req.encrypted_id;
+    window.openViewModal = function(req) {
+        currentModalEncryptedId = req.encrypted_id;
 
-            $('#modalReqId').text(req.req_id);
-            $('#modalRemarks').text(req.remarks || 'N/A');
-            
-            // Show dynamic remarks
-            if(req.remarks1) { $('#modalRemarks1Container').show(); $('#modalRemarks1').text(req.remarks1); } else { $('#modalRemarks1Container').hide(); }
-            if(req.remarks2) { $('#modalRemarks2Container').show(); $('#modalRemarks2').text(req.remarks2); } else { $('#modalRemarks2Container').hide(); }
-            if(req.remarks3) { $('#modalRemarks3Container').show(); $('#modalRemarks3').text(req.remarks3); } else { $('#modalRemarks3Container').hide(); }
+        document.getElementById('modalReqId').textContent = req.req_id;
+        document.getElementById('modalRemarks').textContent = req.remarks || 'N/A';
 
-            let html = '';
-            let grandTotal = 0;
+        let r1 = document.getElementById('modalRemarks1Container');
+        let r1s = document.getElementById('modalRemarks1');
+        if(req.remarks1) { r1.style.display = 'block'; r1s.textContent = req.remarks1; } else { r1.style.display = 'none'; }
 
-            if (req.items && req.items.length > 0) {
-                req.items.forEach(function(item) {
-                    let productName = item.product ? item.product.name : 'Unknown';
-                    let unitName = item.unit ? item.unit.name : 'N/A';
-                    let price = item.product && item.product.price_master ? parseFloat(item.product.price_master.pro_mrp_price) : 0;
-                    
-                    // Logic to handle 0 and modified quantities strictly
-                    let isModified = (item.modify_quantity !== null);
-                    let reqQty = parseFloat(item.quantity);
-                    let finalQty = isModified ? parseFloat(item.modify_quantity) : reqQty;
-                    
-                    let origTotal = price * reqQty;
-                    let finalTotal = price * finalQty;
-                    grandTotal += finalTotal;
+        let r2 = document.getElementById('modalRemarks2Container');
+        let r2s = document.getElementById('modalRemarks2');
+        if(req.remarks2) { r2.style.display = 'block'; r2s.textContent = req.remarks2; } else { r2.style.display = 'none'; }
 
-                    let qtyHtml = isModified ? `<del class="text-danger">${reqQty}</del>` : reqQty;
-                    let finalQtyHtml = isModified ? `<span class="text-success font-weight-bold">${finalQty}</span>` : `<span class="text-dark">${finalQty}</span>`;
-                    
-                    let totalHtml = isModified ? `<del class="text-danger">₹${origTotal.toFixed(2)}</del><br><span class="text-success font-weight-bold">₹${finalTotal.toFixed(2)}</span>` : `<span class="text-dark">₹${origTotal.toFixed(2)}</span>`;
+        let r3 = document.getElementById('modalRemarks3Container');
+        let r3s = document.getElementById('modalRemarks3');
+        if(req.remarks3) { r3.style.display = 'block'; r3s.textContent = req.remarks3; } else { r3.style.display = 'none'; }
 
-                    html += `<tr>
-                                <td>${item.product_id}</td>
-                                <td><strong>${productName}</strong></td>
-                                <td class="text-center">${qtyHtml}</td>
-                                <td class="text-center">${finalQtyHtml}</td>
-                                <td>${unitName}</td>
-                                <td class="text-right">₹${price.toFixed(2)}</td>
-                                <td class="text-right">${totalHtml}</td>
-                             </tr>`;
-                });
-            } else {
-                html = `<tr><td colspan="7" class="text-center">No Items Found</td></tr>`;
-            }
+        let html = '';
+        let grandTotal = 0;
 
-            $('#modalItemsBody').html(html);
-            $('#modalGrandTotal').text(`₹${grandTotal.toFixed(2)}`);
+        if (req.items && req.items.length > 0) {
+            req.items.forEach(function(item) {
+                let productName = item.product ? item.product.name : 'Unknown';
+                let unitName = item.unit ? item.unit.name : 'N/A';
+                let price = item.product && item.product.price_master ? parseFloat(item.product.price_master.pro_mrp_price) : 0;
 
-            // Requester Action Visibility
-            const currentUserId = {{ Auth::id() ?? 0 }};
-            if (req.status == 2 && req.user_id == currentUserId && req.req_accept_by == 0) {
-                $('#requesterActions').show();
-            } else {
-                $('#requesterActions').hide();
-            }
+                let isModified = (item.modify_quantity !== null);
+                let reqQty = parseFloat(item.quantity);
+                let finalQty = isModified ? parseFloat(item.modify_quantity) : reqQty;
 
-            document.getElementById('viewReqModal').style.display = 'flex';
-        });
+                let origTotal = price * reqQty;
+                let finalTotal = price * finalQty;
+                grandTotal += finalTotal;
 
-        async function requesterAction(action) {
-            const remarks = document.getElementById('requesterRemarks').value.trim();
-            if(action === 'requester_reject' && remarks === '') { toastr.error('Remarks are mandatory.'); return; }
+                let qtyHtml = isModified ? '<del style="color:#dc2626;">' + reqQty + '</del>' : reqQty;
+                let finalQtyHtml = isModified ? '<span style="color:#059669; font-weight:700;">' + finalQty + '</span>' : '<span>' + finalQty + '</span>';
+                let totalHtml = isModified ? '<del style="color:#dc2626;">₹' + origTotal.toFixed(2) + '</del><br><span style="color:#059669; font-weight:700;">₹' + finalTotal.toFixed(2) + '</span>' : '<span>₹' + origTotal.toFixed(2) + '</span>';
 
-            const formData = new FormData();
-            formData.append('action', action);
-            formData.append('remarks', remarks);
-            formData.append('_token', '{{ csrf_token() }}');
-
-            try {
-                const res = await fetch(`{{ url('requisition/process') }}/${currentModalEncryptedId}`, { method: 'POST', body: formData });
-                const data = await res.json();
-                if(res.ok && data.status === 'success') {
-                    toastr.success('Success');
-                    setTimeout(() => window.location.reload(), 1000);
-                } else { toastr.error(data.message); }
-            } catch (e) { toastr.error('System Error.'); }
+                html += '<tr>' +
+                    '<td style="padding:10px 8px; border-bottom:1px solid #f1f5f9; color:#64748b;">' + item.product_id + '</td>' +
+                    '<td style="padding:10px 8px; border-bottom:1px solid #f1f5f9; font-weight:600;">' + productName + '</td>' +
+                    '<td style="padding:10px 8px; border-bottom:1px solid #f1f5f9; text-align:center;">' + qtyHtml + '</td>' +
+                    '<td style="padding:10px 8px; border-bottom:1px solid #f1f5f9; text-align:center;">' + finalQtyHtml + '</td>' +
+                    '<td style="padding:10px 8px; border-bottom:1px solid #f1f5f9;">' + unitName + '</td>' +
+                    '<td style="padding:10px 8px; border-bottom:1px solid #f1f5f9; text-align:right;">₹' + price.toFixed(2) + '</td>' +
+                    '<td style="padding:10px 8px; border-bottom:1px solid #f1f5f9; text-align:right;">' + totalHtml + '</td>' +
+                '</tr>';
+            });
+        } else {
+            html = '<tr><td colspan="7" style="padding:24px; text-align:center; color:#64748b;">No Items Found</td></tr>';
         }
-        </script>
-    @endpush
+
+        document.getElementById('modalItemsBody').innerHTML = html;
+        document.getElementById('modalGrandTotal').textContent = '₹' + grandTotal.toFixed(2);
+
+        const currentUserId = {{ Auth::id() ?? 0 }};
+        const actionsDiv = document.getElementById('requesterActions');
+        if (req.status == 2 && req.user_id == currentUserId && req.req_accept_by == 0) {
+            actionsDiv.style.display = 'block';
+        } else {
+            actionsDiv.style.display = 'none';
+        }
+
+        document.getElementById('viewReqModal').style.display = 'flex';
+    };
+
+    window.closeViewModal = function() {
+        document.getElementById('viewReqModal').style.display = 'none';
+    };
+
+    async function requesterAction(action) {
+        const remarks = document.getElementById('requesterRemarks').value.trim();
+        if(action === 'requester_reject' && remarks === '') { toastr.error('Remarks are mandatory.'); return; }
+
+        const formData = new FormData();
+        formData.append('action', action);
+        formData.append('remarks', remarks);
+        formData.append('_token', '{{ csrf_token() }}');
+
+        try {
+            const res = await fetch('{{ url("requisition/process") }}/' + currentModalEncryptedId, { method: 'POST', body: formData });
+            const data = await res.json();
+            if(res.ok && data.status === 'success') {
+                toastr.success('Success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else { toastr.error(data.message); }
+        } catch (e) { toastr.error('System Error.'); }
+    }
+</script>
+@endpush
 
 @endsection

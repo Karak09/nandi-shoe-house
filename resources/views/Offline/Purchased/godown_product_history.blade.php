@@ -22,6 +22,20 @@
                     <span class="bengali-name">({{ $firstItem->product->ben_name }})</span>
                 @endif
             </h2>
+            @php
+                $colour = $firstItem?->product?->colourRelation?->colour_name ?? '';
+                $size = $firstItem?->product?->pro_size ?? '';
+            @endphp
+            @if($colour || $size)
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:4px;">
+                    @if($colour)
+                        <span style="background:#ede9fe; color:#6d28d9; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">{{ $colour }}</span>
+                    @endif
+                    @if($size)
+                        <span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">{{ $size }}</span>
+                    @endif
+                </div>
+            @endif
             <div style="color: var(--text-muted); font-size: 13px; margin-top:2px; font-weight:600;">
                 📍 Main Godown Ledger
             </div>
@@ -51,6 +65,8 @@
                 <tr>
                     <th>ID</th>
                     <th>Product Name (Batch)</th>
+                    <th>Size</th>
+                    <th>Colour</th>
                     <th>Bill Date</th>
                     <th>MRP</th>
                     <th>Sale Price</th>
@@ -69,6 +85,20 @@
                         <div style="font-size:11px; color:#64748b; margin-top:2px;">
                             Batch: {{ is_array($row->batch_no) ? implode(', ', $row->batch_no) : ($row->batch_no ?? '-') }}
                         </div>
+                    </td>
+                    <td>
+                        @if($row->product->pro_size ?? null)
+                            <span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">{{ $row->product->pro_size }}</span>
+                        @else
+                            <span style="color:#a1a1aa;">-</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($row->product->colourRelation->colour_name ?? null)
+                            <span style="background:#ede9fe; color:#6d28d9; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">{{ $row->product->colourRelation->colour_name }}</span>
+                        @else
+                            <span style="color:#a1a1aa;">-</span>
+                        @endif
                     </td>
                     <td>{{ \Carbon\Carbon::parse($row->created_at)->format('d M Y, h:i A') }}</td>
                     <td>₹{{ number_format($row->mrp, 2) }}</td>
@@ -95,7 +125,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" style="text-align:center; padding:40px; color:#71717a;">No transactions found for this product.</td>
+                    <td colspan="11" style="text-align:center; padding:40px; color:#71717a;">No transactions found for this product.</td>
                 </tr>
                 @endforelse
             </tbody>

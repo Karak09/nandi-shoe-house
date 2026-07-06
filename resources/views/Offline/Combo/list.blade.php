@@ -90,6 +90,14 @@
                     <td>
                         <strong>{{ $c->product->name ?? 'N/A' }}</strong>
                         <span class="ben-name-display">{{ $c->product->ben_name ?? '' }}</span>
+                        <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:2px;">
+                            @if($c->product->colourRelation->colour_name ?? null)
+                                <span style="background:#ede9fe; color:#6d28d9; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">{{ $c->product->colourRelation->colour_name }}</span>
+                            @endif
+                            @if($c->product->pro_size ?? null)
+                                <span style="background:#e0f2fe; color:#0369a1; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">{{ $c->product->pro_size }}</span>
+                            @endif
+                        </div>
                     </td>
                     <td>{{ $c->store->store_name ?? $c->store->name ?? '-' }}</td>
                     <td>{{ $c->user->details->f_name ?? '' }} {{ $c->user->details->l_name ?? 'Admin' }}</td>
@@ -125,6 +133,8 @@
                                 <tr>
                                     <th>SL</th>
                                     <th>Product Name</th>
+                                    <th>Size</th>
+                                    <th>Colour</th>
                                     <th>Qty & UOM</th>
                                     <th>Unit Price (₹)</th>
                                     <th>GST %</th>
@@ -144,6 +154,8 @@
                                 <tr>
                                     <th>SL</th>
                                     <th>Product Name</th>
+                                    <th>Size</th>
+                                    <th>Colour</th>
                                     <th>Qty & UOM</th>
                                     <th>Rate (₹)</th>
                                     <th>MRP (₹)</th>
@@ -164,6 +176,8 @@
     <tr>
         <td class="r-sl" style="color: #94a3b8;"></td>
         <td class="r-name"></td>
+        <td class="r-size"></td>
+        <td class="r-colour"></td>
         <td class="r-qty" style="color:#dc2626; font-weight:bold; white-space: nowrap;"></td>
         <td class="r-unit-price"></td>
         <td class="r-gst"></td>
@@ -175,6 +189,8 @@
     <tr>
         <td class="f-sl" style="color: #94a3b8;"></td>
         <td class="f-name"></td>
+        <td class="f-size"></td>
+        <td class="f-colour"></td>
         <td class="f-qty" style="color:#16a34a; font-weight:bold; white-space: nowrap;"></td>
         <td class="f-rate"></td>
         <td class="f-mrp"></td>
@@ -220,6 +236,10 @@
                     const clone = document.getElementById('row-raw').content.cloneNode(true);
                     clone.querySelector('.r-sl').innerText = index + 1;
                     clone.querySelector('.r-name').innerHTML = `<b>${item.product?.name}</b><br><span class="ben-name-display">(${item.product?.ben_name || ''})</span>`;
+                    let size = item.product?.pro_size || '-';
+                    let colour = item.product?.colour_relation?.colour_name || '-';
+                    clone.querySelector('.r-size').innerHTML = size !== '-' ? `<span style="background:#e0f2fe; color:#0369a1; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${size}</span>` : '<span style="color:#a1a1aa;">-</span>';
+                    clone.querySelector('.r-colour').innerHTML = colour !== '-' ? `<span style="background:#ede9fe; color:#6d28d9; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${colour}</span>` : '<span style="color:#a1a1aa;">-</span>';
                     let uomName = item.uom_relation?.name || item.uom_relation?.keyword || '';
                     clone.querySelector('.r-qty').innerText = item.quantity + " " + uomName;
                     clone.querySelector('.r-unit-price').innerText = '₹' + (item.unit_price || 0);
@@ -233,6 +253,10 @@
                     const clone = document.getElementById('row-finished').content.cloneNode(true);
                     clone.querySelector('.f-sl').innerText = index + 1;
                     clone.querySelector('.f-name').innerHTML = `<b>${item.product?.name}</b><br><span class="ben-name-display">(${item.product?.ben_name || ''})</span>`;
+                    let size = item.product?.pro_size || '-';
+                    let colour = item.product?.colour_relation?.colour_name || '-';
+                    clone.querySelector('.f-size').innerHTML = size !== '-' ? `<span style="background:#e0f2fe; color:#0369a1; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${size}</span>` : '<span style="color:#a1a1aa;">-</span>';
+                    clone.querySelector('.f-colour').innerHTML = colour !== '-' ? `<span style="background:#ede9fe; color:#6d28d9; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600;">${colour}</span>` : '<span style="color:#a1a1aa;">-</span>';
                     let uomName = item.uom_relation?.name || item.uom_relation?.keyword || '';
                     clone.querySelector('.f-qty').innerText = item.quantity + " " + uomName;
                     clone.querySelector('.f-rate').innerText = '₹' + (item.unit_price || 0);

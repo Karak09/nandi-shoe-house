@@ -177,6 +177,8 @@
                         <tr>
                             <th class="text-center" style="width: 40px;">Sl No.</th>
                             <th>Product Description & Batch</th>
+                            <th class="text-center" style="width: 50px;">Size</th>
+                            <th class="text-center" style="width: 60px;">Colour</th>
                             <th class="text-center" style="width: 50px;">UOM</th>
                             <th class="text-right" style="width: 60px;">Qty</th>
                             <th class="text-right" style="width: 80px;">MRP (₹)</th>
@@ -191,6 +193,20 @@
                             <td>
                                 <strong>{{ optional($item->product)->name ?? 'N/A' }}</strong><br>
                                 <small style="color: #555;">Batch: {{ is_array($item->batch_no) ? implode(', ', $item->batch_no) : $item->batch_no }}</small>
+                            </td>
+                            <td class="text-center">
+                                @if(optional($item->product)->pro_size ?? null)
+                                    <span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600;">{{ $item->product->pro_size }}</span>
+                                @else
+                                    <span style="color:#999;">-</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if(optional($item->product->colourRelation)->colour_name ?? null)
+                                    <span style="background:#ede9fe; color:#6d28d9; padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600;">{{ $item->product->colourRelation->colour_name }}</span>
+                                @else
+                                    <span style="color:#999;">-</span>
+                                @endif
                             </td>
                             <td class="text-center">{{ optional($item->uomRelation)->keyword ?? '' }}</td>
                             <td class="text-right">{{ number_format($item->quantity, 2) }}</td>

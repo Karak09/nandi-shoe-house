@@ -34,7 +34,7 @@ class RequisitionController extends CommonController
         $storeId = $request->store_id;
 
         // Eager load priceMaster to get the price
-        $query = Product::with(['images', 'category', 'unit', 'priceMaster'])
+        $query = Product::with(['images', 'category', 'uomRelation', 'priceMaster', 'colourRelation'])
             ->where('is_active', 1)
             ->where('is_deleted', 0);
 
@@ -67,7 +67,8 @@ class RequisitionController extends CommonController
                 'product_code' => $product->product_code,
                 'pro_size' => $product->pro_size,
                 'uom_id' => $product->uom,
-                'uom_name' => $product->unit->name ?? 'N/A',
+                'uom_name' => $product->uomRelation->keyword ?? $product->uomRelation->name ?? 'PCS',
+                'colour_name' => $product->colourRelation->colour_name ?? '',
                 'category_name' => $product->category->name ?? 'N/A',
                 'price' => $price,
                 'image_array' => $images
@@ -137,7 +138,7 @@ class RequisitionController extends CommonController
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $role = $user->user_type_id ?? 1; 
@@ -146,6 +147,19 @@ class RequisitionController extends CommonController
         $storeId = $store ? $store->id : null;
 
         $query = Requisition::with(['items.product.priceMaster', 'items.unit']);
+
+        // --- DATE FILTER ---
+        if ($request->filled('from_date')) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+        if ($request->filled('to_date')) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        // --- STATUS FILTER ---
+        if ($request->filled('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
 
         // --- STRICT VISIBILITY LOGIC ---
         if ($role == 3) { 
@@ -185,12 +199,13 @@ class RequisitionController extends CommonController
             $reqUser = DB::table('users_details')->where('id', $req->user_id)->first();
             $req->creator_name = $reqUser ? trim(($reqUser->f_name ?? '') . ' ' . ($reqUser->l_name ?? '') ?? 'System') : 'Unknown';
 
-            // $req->creator_name = $reqUser ? ($reqUser->f_name ?? $reqUser->name ?? 'System') : 'Unknown';
-
             return $req;
         });
+
+        $fromDate = $request->from_date ?? now()->subDays(30)->format('Y-m-d');
+        $toDate = $request->to_date ?? now()->format('Y-m-d');
         
-        return view('Offline.Requisition.requisition_list', compact('requisitions', 'role', 'storeId'));
+        return view('Offline.Requisition.requisition_list', compact('requisitions', 'role', 'storeId', 'fromDate', 'toDate'));
     }
     
     // perfectly fine. only reoved barcode [] in db.
