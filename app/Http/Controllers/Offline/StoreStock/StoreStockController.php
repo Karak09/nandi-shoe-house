@@ -348,28 +348,36 @@ class StoreStockController extends CommonController
             ->where('is_deleted', false)
             ->get();
 
-        $storeId = $request->input('store_id', $stores->first()->id ?? null);
+        $storeId = $request->input('store_id', '');
 
-        $query = PurchaseDetails::with(['transactions.product', 'transactions.uomRelation'])
-            ->where('transaction_type', 2) // 2 = OUTWARD Transfer
-            ->orderBy('challan_date', 'desc')
+        $query = StoreStockDetails::with(['product.colourRelation', 'uomRelation', 'store', 'combo', 'requisition'])
+            ->whereIn('transaction_type', [2, 3, 4]) // 2=Sale OUT, 3=Combo OUT, 4=Requisition OUT
+            ->orderBy('created_at', 'desc')
             ->orderBy('id', 'desc');
 
         if ($storeId) {
-            $query->whereHas('transactions', function($q) use ($storeId) {
-                $q->where('store_id', $storeId);
-            });
+            $query->where('store_id', $storeId);
         }
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('challan_date', [$request->start_date, $request->end_date]);
+            $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
         } else {
-            $query->whereDate('challan_date', Carbon::today());
+            $query->whereDate('created_at', Carbon::today());
         }
 
-        $challans = $query->get();
+        $rawTransactions = $query->get();
 
-        return view('Offline.StoreStock.store_transaction_ledger', compact('stores', 'storeId', 'challans'));
+        $transactions = $rawTransactions->groupBy(function($item) {
+            if ($item->transaction_type == 3 && $item->combo_id) {
+                return 'combo_' . $item->combo_id;
+            } elseif ($item->transaction_type == 4 && $item->requisition_details_id) {
+                return 'req_' . $item->requisition_details_id;
+            } else {
+                return 'sale_' . $item->id;
+            }
+        });
+
+        return view('Offline.StoreStock.store_transaction_ledger', compact('stores', 'storeId', 'transactions'));
     }
 
     // --- Store Purchase Product History PAGE ---

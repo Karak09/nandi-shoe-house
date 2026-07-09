@@ -220,15 +220,18 @@ class StoreSaleController extends CommonController
 
                 // StoreStockDetail
                 StoreStockDetails::create([
-                    'user_id' => $user->id, // User ID Added
+                    'user_id' => $user->id,
                     'store_id' => $storeId,
+                    'store_transfer_id' => $transferDetail->id,
                     'product_id' => $item['id'],
-                    'barcode_no' => $jsonBarcode, // JSON Format
-                    'batch_no' => null, // NULL explicitly
-                    'transaction_type' => 2, // Deduction
+                    'barcode_no' => [$item['barcode']],
+                    'batch_no' => null,
+                    'transaction_type' => 2,
                     'quantity' => $item['qty'],
-                    'reference_no' => $transferNo,
-                    'remarks' => 'In-Store POS Sale'
+                    'uom' => $item['uom_id'],
+                    'mrp' => $item['mrp'],
+                    'unit_price' => $item['price'],
+                    'total_price' => $item['price'] * $item['qty'],
                 ]);
 
                 // Master StoreStock
